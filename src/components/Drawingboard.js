@@ -219,6 +219,7 @@ const DrawingBoard = () => {
   const textAreaRef = useRef();
   const pressedKeys = usePressedKeys();
 
+
   useLayoutEffect(() => {
     const canvas = document.getElementById("canvas");
     const context = canvas.getContext("2d");
@@ -307,15 +308,15 @@ const DrawingBoard = () => {
   };
 
   const getMouseCoordinates = event => {
-    const clientX = event.clientX - panOffset.x;
-    const clientY = event.clientY - panOffset.y;
+    const clientX = event.clientX - panOffset.x-220;
+    const clientY = event.clientY - panOffset.y-30;
     return { clientX, clientY };
   };
 
   const handleMouseDown = event => {
     if (action === "writing") return;
 
-    const { clientX, clientY } = getMouseCoordinates(event);
+    const { clientX, clientY} = getMouseCoordinates(event);
 
     if (event.button === 1 || pressedKeys.has(" ")) {
       setAction("panning");

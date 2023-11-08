@@ -1,5 +1,24 @@
+*{
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+}
+
+:root {
+  --primarycolor:hsl(179, 93%, 44%);
+  --blue:hsl(183, 100%, 35%);
+  --lightblue:hsl(183, 49%, 63%);
+  --secondarycolor:hsl(217, 10%, 25%);
+  --Backgroundcolor:hsl(216, 19%, 16%);
+  --white:hsl(0, 0%, 100%);
+  --darkishwhite:hsl(0, 0%, 78%);
+}
 
 
+::-webkit-scrollbar-thumb {
+  background: var(--blue);
+}
 .homePageWrapper {
   display: flex;
   align-items: center;
@@ -9,20 +28,25 @@
 }
 
 .formWrapper {
-  background: #282a36;
+  background:var(--secondarycolor);
   padding: 20px;
   border-radius: 10px;
   width: 400px;
   max-width: 90%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
 
 footer {
   position: fixed;
   bottom: 0;
+  margin-bottom: 20px;
 }
 
 footer a {
-  color: #4aee88;
+  color: var(--primarycolor);
 }
 
 .inputGroup {
@@ -33,11 +57,13 @@ footer a {
 .mainLabel {
   margin-bottom: 20px;
   margin-top: 0;
+  color: var(--primarycolor);
 }
 
 .homePageLogo {
   height: 80px;
   margin-bottom: 30px;
+  border-radius: 100%;
 }
 
 .inputBox {
@@ -47,8 +73,7 @@ footer a {
   border: none;
   margin-bottom: 14px;
   background: #eee;
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 14px;
 }
 
 .btn {
@@ -63,14 +88,15 @@ footer a {
 
 .joinBtn,
 .leaveBtn {
-  background: #4aed88;
+  background: var(--primarycolor);
   width: 100px;
   margin-left: auto;
+  background-color: var(--primarycolor);
 }
 
 .joinBtn:hover,
 .leaveBtn:hover {
-  background: #2b824c;
+  background-color: var(--lightblue);
 }
 
 .createInfo {
@@ -79,16 +105,16 @@ footer a {
 }
 
 .createNewBtn {
-  color: #4aed88;
+  color:var(--primarycolor);
   text-decoration: none;
-  border-bottom: 1px solid #4aed88;
+  border-bottom: 1px solid var(--primarycolor);
   transition: all 0.3s ease-in-out;
 }
 
 .createNewBtn:hover,
 footer a:hover {
-  color: #368654;
-  border-color: #368654;
+  color: var(--primarycolor);
+  border-color:var(--primarycolor);
 }
 
 .mainWrap {

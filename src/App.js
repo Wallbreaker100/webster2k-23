@@ -1,7 +1,8 @@
 import './App.css';
 import { BrowserRouter,Routes,Route } from 'react-router-dom';
-import Home from './pages/Home.js';
+import Room from './pages/Room.js';
 import Whiteboard from './pages/Whiteboard.js';
+import Home from './pages/Home.js';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home/>}></Route>
+          <Route path="/room" element={<Room/>}></Route>
           <Route path="/room/:roomId" element={<Whiteboard/>}></Route>
         </Routes>
       </BrowserRouter>
