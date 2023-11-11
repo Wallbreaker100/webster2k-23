@@ -21,7 +21,7 @@ h1{
 .outernav{
     background-color:var(--secondarycolor);
     display: flex;
-    padding:25px 40px;
+    padding:15px 40px;
     justify-content: space-between;
     align-items: center;
 }
@@ -73,8 +73,10 @@ span{
     justify-content: center;
     padding-left:130px;
 }
-
 button{
+    cursor: pointer;
+}
+.loginbtn{
     margin-top:40px;
     padding:18px 43px;
     width:fit-content;
@@ -84,4 +86,23 @@ button{
     font-weight: bold;
     box-shadow: 0 0 1.5625rem 0.625rem var(--blue);
     border: none;
+
+}
+
+.loginbtn:hover{
+    background-color:var(--lightblue)
+}
+
+.logoutbtn{
+    padding:11px 14px;
+    width:fit-content;
+    background-color: var(--primarycolor);
+    color:var(--white);
+    font-size:12.5px;
+    font-weight: bold;
+    border: none;
+}
+
+.logoutbtn:hover{
+    background-color:var(--lightblue)
 }

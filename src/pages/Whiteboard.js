@@ -15,25 +15,27 @@ import {
 
 const Whiteboard = () => {
     const socketRef = useRef(null);
-    const codeRef = useRef(null);
     const location = useLocation();
     const { roomId } = useParams();
     const reactNavigator = useNavigate();
     const [clients, setClients] = useState([]);
 
-
+    //iniitialising socket using useeffect
     useEffect(() => {
         const init = async () => {
             socketRef.current = await initSocket();
             socketRef.current.on('connect_error', (err) => handleErrors(err));
             socketRef.current.on('connect_failed', (err) => handleErrors(err));
+            
 
+            //handling errors
             function handleErrors(e) {
                 console.log('socket error', e);
                 toast.error('Socket connection failed, try again later.');
                 reactNavigator('/');
             }
-
+            
+            //joining socket
             socketRef.current.emit(ACTIONS.JOIN, {
                 roomId,
                 username: location.state?.username,
@@ -66,12 +68,14 @@ const Whiteboard = () => {
         };
         init();
         return () => {
+            //disconnecting events of socket
             socketRef.current.disconnect();
             socketRef.current.off(ACTIONS.JOINED);
             socketRef.current.off(ACTIONS.DISCONNECTED);
         };
     }, []);
 
+    //copying to clipboard code
     async function copyRoomId() {
         try {
             console.log(roomId);
@@ -83,6 +87,7 @@ const Whiteboard = () => {
         }
     }
 
+    //leaving room button 
     function leaveRoom() {
         reactNavigator('/');
     }
@@ -91,6 +96,7 @@ const Whiteboard = () => {
         return <Navigate to="/" />;
     }
 
+    //html code for drawing board
     return (
         <div className="mainWrap">
             <div className="aside">

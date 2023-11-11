@@ -1,6 +1,8 @@
 import React from 'react';
 import Avatar from 'react-avatar';
 
+
+//client avatar component
 const Client = ({ username }) => {
     return (
         <div className="client">
