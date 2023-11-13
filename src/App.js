@@ -9,10 +9,17 @@ function App() {
   return (
     <>
       <div>
-        <Toaster position="top-right" toastOptions={
+        <Toaster position="bottom-right" toastOptions={
+          
           {success:{
+            style: {
+              display:'flex',
+              alignItems:'center',
+              justifyContent:'center',
+              padding: '16px',
+            },
             theme:{
-              primary:"#4aed88",
+              primary:"hsl(179, 93%, 44%)",
             }
           }}
         }>

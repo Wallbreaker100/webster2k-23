@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs/bundled/rough.esm";
 import getStroke from "perfect-freehand";
-
+import "./../css/drawingBoard.css"
 const generator = rough.generator();
 
 const createElement = (id, x1, y1, x2, y2, type) => {
@@ -13,12 +13,20 @@ const createElement = (id, x1, y1, x2, y2, type) => {
           ? generator.line(x1, y1, x2, y2)
           : generator.rectangle(x1, y1, x2 - x1, y2 - y1);
       return { id, x1, y1, x2, y2, type, roughElement };
+    case "circle":
+      const roughCircle=generator.circle(x1,y1,50);
+      return {id,x1,y1,x2,y2,type,roughCircle};
     case "pencil":
       return { id, type, points: [{ x: x1, y: y1 }] };
+    case "eraser":
+      return {id,type,points: [{ x: x1, y: y1 }] };
     case "text":
       return { id, type, x1, y1, x2, y2, text: "" };
+    case "clear_canvas":
+      console.log("clearing canvas");
+      return {id,type,x1,y1,x2,y2,text:""};
     default:
-      throw new Error(`Type not recognised: ${type}`);
+      throw new Error(`Type not recognised2: ${type}`);
   }
 };
 
@@ -59,11 +67,14 @@ const positionWithinElement = (x, y, element) => {
     case "text":
       return x >= x1 && x <= x2 && y >= y1 && y <= y2 ? "inside" : null;
     default:
-      throw new Error(`Type not recognised: ${type}`);
+      throw new Error(`Type not recognised1: ${type}`);
   }
 };
 
 const distance = (a, b) => Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+
+
+//getting element on mouse click by looking at coordinates stored and its type----------------------------------------------
 
 const getElementAtPosition = (x, y, elements) => {
   return elements
@@ -117,7 +128,7 @@ const resizedCoordinates = (clientX, clientY, position, coordinates) => {
     case "end":
       return { x1, y1, x2: clientX, y2: clientY };
     default:
-      return null; //should not really get here...
+      return null;
   }
 };
 
@@ -160,23 +171,38 @@ const getSvgPathFromStroke = stroke => {
   return d.join(" ");
 };
 
-const drawElement = (roughCanvas, context, element) => {
+const drawElement = (roughCanvas, context, element,color,Thickness) => {
+  // console.log(color);
   switch (element.type) {
     case "line":
     case "rectangle":
+    case "circle":
       roughCanvas.draw(element.roughElement);
       break;
     case "pencil":
-      const stroke = getSvgPathFromStroke(getStroke(element.points));
+      context.fillStyle=color;
+      const stroke = getSvgPathFromStroke(getStroke(element.points,{
+        size:Thickness,
+      }));
       context.fill(new Path2D(stroke));
+      break;
+    case "eraser":
+      context.fillStyle = "#ffffff";
+      const stroke1 = getSvgPathFromStroke(getStroke(element.points,{
+        size:50,
+      }));
+      context.fill(new Path2D(stroke1));
       break;
     case "text":
       context.textBaseline = "top";
       context.font = "24px sans-serif";
       context.fillText(element.text, element.x1, element.y1);
       break;
+    case "clear_canvas":
+      context.clearRect(0, 0, roughCanvas.width, roughCanvas.height);
+      break;
     default:
-      throw new Error(`Type not recognised: ${element.type}`);
+      throw new Error(`Type not recognised3: ${element.type}`);
   }
 };
 
@@ -210,32 +236,45 @@ const usePressedKeys = () => {
 };
 
 const DrawingBoard = () => {
+
+  //initialising default variables-------------------------------------------------------------------------
+
   const [elements, setElements, undo, redo] = useHistory([]);
   const [action, setAction] = useState("none");
-  const [tool, setTool] = useState("rectangle");
+  const [tool, setTool] = useState("pencil");
   const [selectedElement, setSelectedElement] = useState(null);
-  const [panOffset, setPanOffset] = React.useState({ x: 0, y: 0 });
+  const [panOffset, setPanOffset] = React.useState({ x:0, y: 0 });
   const [startPanMousePosition, setStartPanMousePosition] = React.useState({ x: 0, y: 0 });
+  const [Thickness,setThickness]=useState(5);
+  const [color,setColor]=useState("#FF0000")
   const textAreaRef = useRef();
   const pressedKeys = usePressedKeys();
+  let canvasRef=useRef(null);
 
 
+
+  //uselayout hook used-------------------------------------------------------------------------------
   useLayoutEffect(() => {
     const canvas = document.getElementById("canvas");
+    canvasRef.current=canvas;
     const context = canvas.getContext("2d");
     const roughCanvas = rough.canvas(canvas);
 
     context.clearRect(0, 0, canvas.width, canvas.height);
-
+    
     context.save();
     context.translate(panOffset.x, panOffset.y);
 
     elements.forEach(element => {
       if (action === "writing" && selectedElement.id === element.id) return;
-      drawElement(roughCanvas, context, element);
+      drawElement(roughCanvas, context, element,color,Thickness);
     });
     context.restore();
   }, [elements, action, selectedElement, panOffset]);
+
+
+
+  //useeffects used---------------------------------------------------------------------------------------
 
   useEffect(() => {
     const undoRedoFunction = event => {
@@ -278,15 +317,22 @@ const DrawingBoard = () => {
     }
   }, [action, selectedElement]);
 
+
+
+  //updating element after moving that is updating coordinates-------------------------------------------------------
   const updateElement = (id, x1, y1, x2, y2, type, options) => {
     const elementsCopy = [...elements];
-
+    // console.log(elementsCopy);
     switch (type) {
       case "line":
       case "rectangle":
         elementsCopy[id] = createElement(id, x1, y1, x2, y2, type);
         break;
+      case "circle":
+        elementsCopy[id] = createElement(id, x1, y1, x2, y2, type);
+        break;
       case "pencil":
+        case "eraser":
         elementsCopy[id].points = [...elementsCopy[id].points, { x: x2, y: y2 }];
         break;
       case "text":
@@ -307,16 +353,21 @@ const DrawingBoard = () => {
     setElements(elementsCopy, true);
   };
 
+
+  //getting coordinates of mouse pointer with respect to canvas--------------------------------------------------------------
   const getMouseCoordinates = event => {
-    const clientX = event.clientX - panOffset.x-220;
-    const clientY = event.clientY - panOffset.y-30;
-    return { clientX, clientY };
+    const clientX = event.clientX - panOffset.x;
+    const clientY = event.clientY - panOffset.y;
+    // console.log(clientX,clientY);
+    return { clientX, clientY};
   };
 
+  //handling mouse down event-------------------------------------------------------------------------------------------
   const handleMouseDown = event => {
     if (action === "writing") return;
 
     const { clientX, clientY} = getMouseCoordinates(event);
+    
 
     if (event.button === 1 || pressedKeys.has(" ")) {
       setAction("panning");
@@ -326,12 +377,19 @@ const DrawingBoard = () => {
 
     if (tool === "selection") {
       const element = getElementAtPosition(clientX, clientY, elements);
+      // console.log(element);
       if (element) {
         if (element.type === "pencil") {
           const xOffsets = element.points.map(point => clientX - point.x);
           const yOffsets = element.points.map(point => clientY - point.y);
           setSelectedElement({ ...element, xOffsets, yOffsets });
-        } else {
+        }
+        else if(element.type=="eraser"){
+          const xOffsets = element.points.map(point => clientX - point.x);
+          const yOffsets = element.points.map(point => clientY - point.y);
+          setSelectedElement({ ...element, xOffsets, yOffsets });
+        }
+        else {
           const offsetX = clientX - element.x1;
           const offsetY = clientY - element.y1;
           setSelectedElement({ ...element, offsetX, offsetY });
@@ -354,6 +412,8 @@ const DrawingBoard = () => {
     }
   };
 
+
+  //handling mouse moving -----------------------------------------------------------------------------------------
   const handleMouseMove = event => {
     const { clientX, clientY } = getMouseCoordinates(event);
 
@@ -437,9 +497,27 @@ const DrawingBoard = () => {
     updateElement(id, x1, y1, null, null, type, { text: event.target.value });
   };
 
+  //clearing canvas function----------------------------------------------------------------------------------
+
+  const clearCanavs=(event)=>{
+    const { clientX, clientY} = getMouseCoordinates(event);
+    canvasRef.current.getContext('2d').clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    // const id = elements.length;
+    const element = createElement("clear_canvas", clientX, clientY, clientX, clientY, "clear_canvas");
+    // console.log(...elements);
+    // // console.log("ele: "+element);
+    // const newState=[...elements, element];
+    // console.log(newState);
+    // setElements(newState);
+    setElements([]);
+  }
+
+
+
+
   return (
-    <div>
-      <div style={{ position: "fixed", zIndex: 2 }}>
+    <div className="outerdiv_for_drawingboard">
+      <div className="toolbox_div">
         <input
           type="radio"
           id="selection"
@@ -458,40 +536,45 @@ const DrawingBoard = () => {
         <label htmlFor="rectangle">Rectangle</label>
         <input
           type="radio"
+          id="circle"
+          checked={tool === "circle"}
+          onChange={() => setTool("circle")}
+        />
+        <label htmlFor="rectangle">Circle</label>
+        <input
+          type="radio"
+          id="trapezium"
+          checked={tool === "trapezium"}
+          onChange={() => setTool("trapezium")}
+        />
+        <label htmlFor="rectangle">Trapezium</label>
+        <input
+          type="radio"
           id="pencil"
           checked={tool === "pencil"}
           onChange={() => setTool("pencil")}
         />
         <label htmlFor="pencil">Pencil</label>
+
+        <input
+          type="radio"
+          id="eraser"
+          checked={tool === "eraser"}
+          onChange={() => setTool("eraser")}
+        />
+        <label htmlFor="eraser">Eraser</label>
+
         <input type="radio" id="text" checked={tool === "text"} onChange={() => setTool("text")} />
         <label htmlFor="text">Text</label>
       </div>
-      <div style={{ position: "fixed", zIndex: 2, bottom: 0, padding: 10 }}>
+      <div className="toolbox_div undo_redo_div">
         <button onClick={undo}>Undo</button>
         <button onClick={redo}>Redo</button>
+        <button id="clear_canvas" onClick={clearCanavs} className="clear_canvas_btn">Clear Canvas</button>
       </div>
-      {action === "writing" ? (
-        <textarea
-          ref={textAreaRef}
-          onBlur={handleBlur}
-          style={{
-            position: "fixed",
-            top: selectedElement.y1 - 2 + panOffset.y,
-            left: selectedElement.x1 + panOffset.x,
-            font: "24px sans-serif",
-            margin: 0,
-            padding: 0,
-            border: 0,
-            outline: 0,
-            resize: "auto",
-            overflow: "hidden",
-            whiteSpace: "pre",
-            background: "transparent",
-            zIndex: 2,
-          }}
-        />
-      ) : null}
+      
       <canvas
+        ref={canvasRef}
         id="canvas"
         width={window.innerWidth}
         height={window.innerHeight}

@@ -4,7 +4,7 @@ import ACTIONS from '../Actions';
 import Client from '../components/Client';
 import { initSocket } from '../socket';
 import Drawingboard from '../components/Drawingboard';
-
+import logo from "./../images/scribble.png"
 
 import {
     useLocation,
@@ -104,9 +104,10 @@ const Whiteboard = () => {
                     <div className="logo">
                         <img
                             className="logoImage"
-                            src="/scribble.gif"
+                            src={logo}
                             alt="logo"
                         />
+                        <h2>Picasso</h2>
                     </div>
                     <h3>Connected</h3>
                     <div className="clientsList">

@@ -1,0 +1,53 @@
+:root {
+    --primarycolor:hsl(179, 93%, 44%);
+    --blue:hsl(183, 100%, 35%);
+    --lightblue:hsl(183, 49%, 63%);
+    --secondarycolor:hsl(217, 10%, 25%);
+    --Backgroundcolor:hsl(216, 19%, 16%);
+    --white:hsl(0, 0%, 100%);
+    --darkishwhite:hsl(0, 0%, 78%);
+}
+
+.outerdiv_for_drawingboard{
+    position: relative;
+}
+
+.outerdiv_for_chat{
+    width:300px;
+    height:100vh;
+    background-color: var(--secondarycolor);
+    z-index: 2000;
+}
+
+.toolbox_div{
+    position: absolute;
+    left:21%;
+    background-color: white;
+    color:var(--blue);
+    padding-top: 10px;
+}
+
+.undo_redo_div{
+    bottom:10px;
+}
+.undo_redo_div button{
+    margin-right: 10px;
+    border-style: none;
+    background-color: var(--primarycolor);
+    padding: 10px 20px;
+    color:white;
+    font-weight: 500;
+}
+
+label{
+    margin-right: 20px;
+}
+
+.clear_canvas_btn{
+    padding:12px 20px;
+    background-color: var(--primarycolor);
+    color:white;
+    border:none;
+    font-weight: 500;
+}
+
