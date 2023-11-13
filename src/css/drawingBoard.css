@@ -51,3 +51,8 @@ label{
     font-weight: 500;
 }
 
+.viewerimg{
+    
+    z-index: 10000;
+    position: absolute;
+}

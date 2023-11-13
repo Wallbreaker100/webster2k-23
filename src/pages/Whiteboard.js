@@ -5,6 +5,7 @@ import Client from '../components/Client';
 import { initSocket } from '../socket';
 import Drawingboard from '../components/Drawingboard';
 import logo from "./../images/scribble.png"
+import { useAuth0 } from "@auth0/auth0-react";
 
 import {
     useLocation,
@@ -14,12 +15,17 @@ import {
 } from 'react-router-dom';
 
 const Whiteboard = () => {
+    const {isAuthenticated,user} = useAuth0();
+    const reactNavigator = useNavigate();
+    if(isAuthenticated!=true){
+        reactNavigator('/');
+    }
     const socketRef = useRef(null);
     const location = useLocation();
     const { roomId } = useParams();
-    const reactNavigator = useNavigate();
+    // const reactNavigator = useNavigate();
     const [clients, setClients] = useState([]);
-
+    const name=location.state?.username;
     //iniitialising socket using useeffect
     useEffect(() => {
         const init = async () => {
@@ -41,7 +47,7 @@ const Whiteboard = () => {
                 username: location.state?.username,
             });
 
-            // // Listening for joined event
+            // Listening for joined event
             socketRef.current.on(
                 ACTIONS.JOINED,
                 ({ clients, username, socketId }) => {
@@ -127,8 +133,9 @@ const Whiteboard = () => {
                 </button>
             </div>
             <div class="leftaside">
-                <Drawingboard/>
-            </div>
+                <Drawingboard socketRef={socketRef} roomId={roomId} name={name}/>
+            </div>           
+            
         </div>
     );
 };

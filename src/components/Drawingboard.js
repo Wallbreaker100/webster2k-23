@@ -235,10 +235,10 @@ const usePressedKeys = () => {
   return pressedKeys;
 };
 
-const DrawingBoard = () => {
+const DrawingBoard = ({socketRef,roomId,name}) => {
 
   //initialising default variables-------------------------------------------------------------------------
-
+  const [img,setImg]=useState(null);
   const [elements, setElements, undo, redo] = useHistory([]);
   const [action, setAction] = useState("none");
   const [tool, setTool] = useState("pencil");
@@ -250,13 +250,29 @@ const DrawingBoard = () => {
   const textAreaRef = useRef();
   const pressedKeys = usePressedKeys();
   let canvasRef=useRef(null);
-
+  let temp=(name==="a");
 
 
   //uselayout hook used-------------------------------------------------------------------------------
+
+  useEffect(() => {
+    if(socketRef.current!=null){
+      // console.log("data");
+      socketRef.current.on("whiteBoardDataResponse", ({imgUrl}) => {
+        console.log("enter: "+imgUrl);
+        setImg(imgUrl);
+      });
+    }
+   
+  }, [socketRef.current, canvasRef]);
+
+
+
+
   useLayoutEffect(() => {
     const canvas = document.getElementById("canvas");
     canvasRef.current=canvas;
+    if(canvas==null || canvasRef.current==null) return;
     const context = canvas.getContext("2d");
     const roughCanvas = rough.canvas(canvas);
 
@@ -264,17 +280,57 @@ const DrawingBoard = () => {
     
     context.save();
     context.translate(panOffset.x, panOffset.y);
-
     elements.forEach(element => {
       if (action === "writing" && selectedElement.id === element.id) return;
       drawElement(roughCanvas, context, element,color,Thickness);
     });
+    const canvasImage = canvasRef.current.toDataURL();
+    if(socketRef.current!=null){
+      // console.log("sending");
+      socketRef.current.emit("whiteboardData",{
+        canvasImage,
+        roomId,
+      });
+    }
+    
+    
     context.restore();
-  }, [elements, action, selectedElement, panOffset]);
+
+    //receving change request from server side through socket-------------------------
+    // if(socketRef.current!=null){
+    //   socketRef.current.on("changeOnAllClients",({elements})=>{
+    //     setElements(elements);
+    //   })
+    // }
+    
+  }, [elements, action, selectedElement, panOffset,socketRef.current]);
 
 
+  // useEffect(()=>{
+  //   // if(socketRef.current!=null){
+  //     // socketRef.current.on("changeOnAllClients",({elements})=>{
+  //     //   console.log("elements: "+elements);
+  //     //   if(elements!=null){
+  //     //     setElements([]);
+  //     //   }
+  //     // })
+  //     if(socketRef.current!=null){
+  //       socketRef.current.on("changeOnAllClients",({elements})=>{
+  //         console.log("elements: ");
+  //         if(elements!=null){
+  //           console.log("hello");
+  //         }
+  //         // if(elements!=null){
+  //         //   setElements([]);
+  //         // }
+  //       });
+  //     }
+      
+  //   // }
+  // },[socketRef.current,elements]);
 
   //useeffects used---------------------------------------------------------------------------------------
+
 
   useEffect(() => {
     const undoRedoFunction = event => {
@@ -462,6 +518,12 @@ const DrawingBoard = () => {
       const { x1, y1, x2, y2 } = resizedCoordinates(clientX, clientY, position, coordinates);
       updateElement(id, x1, y1, x2, y2, type);
     }
+
+    //emitting mouse moving request on socket------------------------------------------------------
+    socketRef.current.emit("onMouseMove",{
+      roomId,
+      elements,
+    });
   };
 
   const handleMouseUp = event => {
@@ -516,7 +578,12 @@ const DrawingBoard = () => {
 
 
   return (
-    <div className="outerdiv_for_drawingboard">
+    <>
+      
+    {
+      temp ? (
+        <div className="outerdiv_for_drawingboard">
+      
       <div className="toolbox_div">
         <input
           type="radio"
@@ -585,7 +652,22 @@ const DrawingBoard = () => {
       >
         Canvas
       </canvas>
+      
     </div>
+      ) :
+      (
+        <div className="col-md-8 overflow-hidden border border-dark px-0 mx-auto mt-3" style={{ height: "100vh", width: "100vw", backgroundColor: "white" }}>
+        <img
+          className="viewerimg"
+          src={img}
+          alt="Real Time whiteboard image shared by presenter"
+          
+        />
+      </div>
+      )
+    }
+    
+    </>
   );
 };
 

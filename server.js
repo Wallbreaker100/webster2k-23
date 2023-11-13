@@ -14,6 +14,9 @@ const io = new Server(server);
 // });
 
 const userSocketMap = {};
+
+
+//function to get all connected clients in a particular room-----------------------------------------------
 function getAllConnectedClients(roomId) {
     // Map
     return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map(
@@ -25,6 +28,9 @@ function getAllConnectedClients(roomId) {
         }
     );
 }
+
+
+//establishing socket connection for backend--------------------------------------------------------------
 
 io.on('connection', (socket) => {
     console.log('socket connected', socket.id);
@@ -42,14 +48,29 @@ io.on('connection', (socket) => {
         });
         // console.log(clients);
     });
-    
-    // socket.on(ACTIONS.CODE_CHANGE, ({ roomId, code }) => {
-    //     socket.in(roomId).emit(ACTIONS.CODE_CHANGE, { code });
-    // });
 
-    // socket.on(ACTIONS.SYNC_CODE, ({ socketId, code }) => {
-    //     io.to(socketId).emit(ACTIONS.CODE_CHANGE, { code });
+    // mouse move socket request -----------------------------
+    socket.on("whiteboardData", ({canvasImage,roomId}) => {
+        let imgUrl = canvasImage;
+        // console.log("updated image->")
+        socket.broadcast.to(roomId).emit("whiteBoardDataResponse", {
+          imgUrl,
+        });
+    });
+
+
+
+
+
+    // socket.on("onMouseMove",({roomId,elements})=>{
+    //     if(elements!=null){
+    //         console.log("mousemoved",elements);
+    //     }
+    //     io.to(roomId).emit("changeOnAllClients",{
+    //         elements,
+    //     })
     // });
+    
 
     socket.on('disconnecting', () => {
         const rooms = [...socket.rooms];

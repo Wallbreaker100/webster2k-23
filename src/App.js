@@ -9,7 +9,7 @@ function App() {
   return (
     <>
       <div>
-        <Toaster position="bottom-right" toastOptions={
+        <Toaster position="top-right" toastOptions={
           
           {success:{
             style: {
