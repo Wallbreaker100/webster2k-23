@@ -24,15 +24,28 @@ const Room = () => {
     };
 
     const joinRoom = async () => {
+        var isHost=0;
         if (!roomId || !username) {
             toast.error('ROOM ID & username is required');
             return;
         }
-
+        const ishost=await fetch("http://localhost:5000/findRooms",{
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({roomId}),
+        });
+        const ishost_data=await ishost.json();
+        if(ishost_data.ishost==1){
+            isHost=1;
+        }
         // Redirect
         navigate(`/room/${roomId}`, {
             state: {
                 username,
+                isHost
             },
         });
     };

@@ -16,6 +16,8 @@ import {
 
 const Whiteboard = () => {
     const {isAuthenticated,user} = useAuth0();
+    const [Chatval,setChatval]=useState("");
+    const [Chathistory,setChathistory]=useState([]);
     const reactNavigator = useNavigate();
     if(isAuthenticated!=true){
         reactNavigator('/');
@@ -26,6 +28,8 @@ const Whiteboard = () => {
     // const reactNavigator = useNavigate();
     const [clients, setClients] = useState([]);
     const name=location.state?.username;
+    const isHost=location.state.isHost;
+    // console.log("am i the host "+isHost);
     //iniitialising socket using useeffect
     useEffect(() => {
         const init = async () => {
@@ -59,6 +63,14 @@ const Whiteboard = () => {
                 }
             );
 
+            //handling sentchat response coming from backend
+            // socketRef.current.on("sentchat",(payload)=>{
+            //     console.log("chat recievd");
+            //     console.log(payload.name +" "+payload.chat);
+            //     console.log("the history is "+Chathistory);
+            //     setChathistory([...Chathistory,payload]);
+            // });
+
             // Listening for disconnected
             socketRef.current.on(
                 ACTIONS.DISCONNECTED,
@@ -71,6 +83,7 @@ const Whiteboard = () => {
                     });
                 }
             );
+            
         };
         init();
         return () => {
@@ -79,7 +92,17 @@ const Whiteboard = () => {
             socketRef.current.off(ACTIONS.JOINED);
             socketRef.current.off(ACTIONS.DISCONNECTED);
         };
-    }, []);
+    },[]);
+
+    useEffect(()=>{
+        if(socketRef.current==null) return;
+        socketRef.current.on("sentchat",(payload)=>{
+            console.log("chat recievd");
+            console.log(payload.name +" "+payload.chat);
+            console.log("the history is "+Chathistory);
+            setChathistory([...Chathistory,payload]);
+        })
+    },[Chathistory,socketRef.current]);
 
     //copying to clipboard code
     async function copyRoomId() {
@@ -92,6 +115,29 @@ const Whiteboard = () => {
             console.error(err);
         }
     }
+
+    //handling change in input box------------------------------------------------------
+
+    async function inputchange(e){
+        let val=e.target.value;
+        setChatval(val);
+        console.log(Chatval);
+    }
+
+    //sending chat button function---------------------------------------------------------
+    
+    async function sendChatFunc(){
+        if(Chatval=="") return;
+        console.log("sendchat clicked");
+        console.log(socketRef.current);
+        socketRef.current.emit("sendchat",{
+            roomId,
+            Chatval,
+            name,
+        });
+        setChatval("");
+    };
+
 
     //leaving room button 
     function leaveRoom() {
@@ -125,6 +171,9 @@ const Whiteboard = () => {
                         ))}
                     </div>
                 </div>
+                {
+                    isHost?(<button className='start_game_btn'>Start Game</button>):(<div></div>)
+                }
                 <button className="btn copyBtn" onClick={copyRoomId}>
                     Copy ROOM ID
                 </button>
@@ -132,10 +181,36 @@ const Whiteboard = () => {
                     Leave
                 </button>
             </div>
-            <div class="leftaside">
+            <div className="leftaside">
                 <Drawingboard socketRef={socketRef} roomId={roomId} name={name}/>
-            </div>           
-            
+            </div>
+
+            <div className='chat-div'>
+                <h3 className='chatheading'>Chat Box</h3>
+                <div className='chat_topdiv'>
+                    {/* <Chat chatval={Chathistory}/> */}
+                    {Chathistory.map((payload,index)=>{
+                        return(
+                            <>
+                                <div className='onechatdiv'>
+                                    <div className='chatusernamediv'>
+                                        <p className='chatusername'>{payload.name}:  </p>
+                                    </div>
+                                    <div className='chatmsgdiv'>
+                                        <p className="chatmsg" key={index}>{payload.chat}</p>
+                                    </div>
+                                    
+                                </div>
+                            </>
+                        )
+                    })}
+                </div>  
+                <div className='chat_bottomdiv'>
+                    <input value={Chatval}  name="chat" onChange={inputchange} placeholder="Chat/Guess" className='inputchat'></input>
+                    <button onClick={sendChatFunc} className='sendchat'>send</button>
+                </div>
+            </div>
+                     
         </div>
     );
 };

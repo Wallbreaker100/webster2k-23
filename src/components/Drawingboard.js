@@ -4,6 +4,10 @@ import getStroke from "perfect-freehand";
 import "./../css/drawingBoard.css"
 const generator = rough.generator();
 
+
+//creating element with its type color and coordinates--------------------------------------------------
+
+
 const createElement = (id, x1, y1, x2, y2, type) => {
   switch (type) {
     case "line":
@@ -30,10 +34,12 @@ const createElement = (id, x1, y1, x2, y2, type) => {
   }
 };
 
+
 const nearPoint = (x, y, x1, y1, name) => {
   return Math.abs(x - x1) < 5 && Math.abs(y - y1) < 5 ? name : null;
 };
 
+//checks that the coordinate lies on a line chosen using selection tool----------------------------------------------
 const onLine = (x1, y1, x2, y2, x, y, maxDistance = 1) => {
   const a = { x: x1, y: y1 };
   const b = { x: x2, y: y2 };
@@ -41,6 +47,8 @@ const onLine = (x1, y1, x2, y2, x, y, maxDistance = 1) => {
   const offset = distance(a, b) - (distance(a, c) + distance(b, c));
   return Math.abs(offset) < maxDistance ? "inside" : null;
 };
+
+// checking psotion with in element--------------------------------------------------------------------
 
 const positionWithinElement = (x, y, element) => {
   const { type, x1, x2, y1, y2 } = element;
@@ -71,7 +79,12 @@ const positionWithinElement = (x, y, element) => {
   }
 };
 
+
+
+//calculating distance--------------------------------------------------------------------
 const distance = (a, b) => Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+
+
 
 
 //getting element on mouse click by looking at coordinates stored and its type----------------------------------------------
@@ -98,6 +111,7 @@ const adjustElementCoordinates = element => {
     }
   }
 };
+
 
 const cursorForPosition = position => {
   switch (position) {
@@ -131,6 +145,9 @@ const resizedCoordinates = (clientX, clientY, position, coordinates) => {
       return null;
   }
 };
+
+
+//creating custom hook called usehistory--------------------------------------------------------------------
 
 const useHistory = initialState => {
   const [index, setIndex] = useState(0);
@@ -171,6 +188,9 @@ const getSvgPathFromStroke = stroke => {
   return d.join(" ");
 };
 
+
+
+// called on mouse move -----------------------------------------------------------------------------
 const drawElement = (roughCanvas, context, element,color,Thickness) => {
   // console.log(color);
   switch (element.type) {
@@ -235,6 +255,12 @@ const usePressedKeys = () => {
   return pressedKeys;
 };
 
+
+/*element to be returned-------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------*/
+
+
+
 const DrawingBoard = ({socketRef,roomId,name}) => {
 
   //initialising default variables-------------------------------------------------------------------------
@@ -243,8 +269,8 @@ const DrawingBoard = ({socketRef,roomId,name}) => {
   const [action, setAction] = useState("none");
   const [tool, setTool] = useState("pencil");
   const [selectedElement, setSelectedElement] = useState(null);
-  const [panOffset, setPanOffset] = React.useState({ x:0, y: 0 });
-  const [startPanMousePosition, setStartPanMousePosition] = React.useState({ x: 0, y: 0 });
+  const [panOffset, setPanOffset] = useState({ x:0, y: 0 });
+  const [startPanMousePosition, setStartPanMousePosition] =useState({ x: 0, y: 0 });
   const [Thickness,setThickness]=useState(5);
   const [color,setColor]=useState("#FF0000")
   const textAreaRef = useRef();
@@ -328,6 +354,8 @@ const DrawingBoard = ({socketRef,roomId,name}) => {
       
   //   // }
   // },[socketRef.current,elements]);
+
+
 
   //useeffects used---------------------------------------------------------------------------------------
 
@@ -417,6 +445,8 @@ const DrawingBoard = ({socketRef,roomId,name}) => {
     // console.log(clientX,clientY);
     return { clientX, clientY};
   };
+
+  
 
   //handling mouse down event-------------------------------------------------------------------------------------------
   const handleMouseDown = event => {
@@ -660,8 +690,6 @@ const DrawingBoard = ({socketRef,roomId,name}) => {
         <img
           className="viewerimg"
           src={img}
-          alt="Real Time whiteboard image shared by presenter"
-          
         />
       </div>
       )

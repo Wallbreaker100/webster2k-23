@@ -56,3 +56,28 @@ label{
     z-index: 10000;
     position: absolute;
 }
+
+.onechatdiv{
+    background-color: var(--darkishwhite);
+    padding:5px;
+    display: flex;
+    word-break: break-all;
+    overflow-x:hidden;
+    border-bottom: 3px solid white;
+}
+
+.chatmsg{
+    color:var(--Backgroundcolor);
+    font-weight: 500;
+}
+.chatusername{
+    color:var(--blue);
+}
+
+.chatusernamediv{
+    flex:0.05;
+    overflow-x: hidden;
+}
+.chatmsgdiv{
+    flex:0.95;
+}
