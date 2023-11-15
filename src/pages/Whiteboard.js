@@ -14,10 +14,76 @@ import {
     useParams,
 } from 'react-router-dom';
 
+
+//list of words--------------------------------------------------------------------------------------
+const words=[
+    "apple",
+    "basketball",
+    "candle",
+    "dolphin",
+    "envelope",
+    "fireworks",
+    "giraffe",
+    "hamburger",
+    "island",
+    "jigsaw",
+    "kangaroo",
+    "lighthouse",
+    "magnet",
+    "notebook",
+    "octopus",
+    "penguin",
+    "quilt",
+    "robot",
+    "sailboat",
+    "tiger",
+    "umbrella",
+    "violin",
+    "watermelon",
+    "xylophone",
+    "yoga",
+    "zeppelin",
+    "astronaut",
+    "butterfly",
+    "compass",
+    "diamond",
+    "eagle",
+    "flamingo",
+    "globe",
+    "hockey",
+    "igloo",
+    "jellyfish",
+    "koala",
+    "lemonade",
+    "mermaid",
+    "ninja",
+    "puzzle",
+    "rhinoceros",
+    "spaceship",
+    "tornado",
+    "unicorn",
+    "volcano",
+    "waffle",
+    "xylograph",
+    "yacht",
+    "zebra"
+      
+]
+
+
+
+
 const Whiteboard = () => {
     const {isAuthenticated,user} = useAuth0();
     const [Chatval,setChatval]=useState("");
     const [Chathistory,setChathistory]=useState([]);
+    const [gamestarted,setgamestarted]=useState(0);
+    const [isDrawer,setisDrawer]=useState(0);
+    const [chosenwords,setchosenwords]=useState([]);
+    const [shouldishow,setshouldishow]=useState(0);
+    const [drawer,setdrawer]=useState("sarthak");
+    const [mysocketid,setmysocketid]=useState(0);
+
     const reactNavigator = useNavigate();
     if(isAuthenticated!=true){
         reactNavigator('/');
@@ -30,7 +96,12 @@ const Whiteboard = () => {
     const name=location.state?.username;
     const isHost=location.state.isHost;
     // console.log("am i the host "+isHost);
-    //iniitialising socket using useeffect
+    //initilising timer for game-----------------------------------------------------------------------------
+
+    var choosewordTimer=10;
+    var gameTimer=30;
+
+    //iniitialising socket using useeffect----------------------------------------------------------------------
     useEffect(() => {
         const init = async () => {
             socketRef.current = await initSocket();
@@ -97,14 +168,12 @@ const Whiteboard = () => {
     useEffect(()=>{
         if(socketRef.current==null) return;
         socketRef.current.on("sentchat",(payload)=>{
-            console.log("chat recievd");
             console.log(payload.name +" "+payload.chat);
-            console.log("the history is "+Chathistory);
             setChathistory([...Chathistory,payload]);
         })
     },[Chathistory,socketRef.current]);
 
-    //copying to clipboard code
+    //copying to clipboard code--------------------------------------------------------------------------
     async function copyRoomId() {
         try {
             console.log(roomId);
@@ -139,6 +208,42 @@ const Whiteboard = () => {
     };
 
 
+    //start game function for host----------------------------------------------------------------
+
+    async function chooseDrawer(){
+        setgamestarted(1);
+        socketRef.current.emit("choosedrawer",{
+            roomId,
+        });
+    }
+
+    useEffect(()=>{
+        if(socketRef.current==null) return;
+        socketRef.current.on("drawerchosen",({chosensocketid,socketId,drawername})=>{
+            if(chosensocketid==socketId){
+                var rand1=Math.floor(Math.random() *10);
+                var rand2=10+Math.floor(Math.random() *10);
+                var rand3=20+Math.floor(Math.random() *10);
+                console.log("the word is: "+words[rand1]);
+                setisDrawer(1);
+                setshouldishow(1);
+                setchosenwords([rand1,rand2,rand3]);
+            }
+            else setshouldishow(1);
+            setdrawer(drawername);
+            setmysocketid(socketId);
+            // console.log("drawer: "+drawername);
+        })
+        
+    },[socketRef.current,drawer,isDrawer,mysocketid])
+    
+    //function called when the drawer chooses the word he has to draw
+
+    async function wordSelected(){
+        
+    }
+    
+
     //leaving room button 
     function leaveRoom() {
         reactNavigator('/');
@@ -151,6 +256,23 @@ const Whiteboard = () => {
     //html code for drawing board
     return (
         <div className="mainWrap">
+            {
+                isDrawer && shouldishow ? <div className='choosewordmaindiv'>
+                    <p>Choose The Word:</p>
+                    <div className='chooseworddiv'>
+                        <button onClick={wordSelected} value={words[chosenwords[0]]} className='wordsbtn'>{words[chosenwords[0]]}</button>
+                        <button onClick={wordSelected} value={words[chosenwords[1]]} className='wordsbtn'>{words[chosenwords[1]]}</button>
+                        <button onClick={wordSelected} value={words[chosenwords[2]]} className='wordsbtn'>{words[chosenwords[2]]}</button>
+                    </div>
+                </div>:
+                <div></div>
+            }
+
+            {
+                !isDrawer && shouldishow ? <div className='whoisdrawingdiv'><p>{drawer} is choosing the word!!</p></div>:<div></div>
+            }
+
+
             <div className="aside">
                 <div className="asideInner">
                     <div className="logo">
@@ -172,7 +294,7 @@ const Whiteboard = () => {
                     </div>
                 </div>
                 {
-                    isHost?(<button className='start_game_btn'>Start Game</button>):(<div></div>)
+                    isHost && !gamestarted ?(<button onClick={chooseDrawer} className='start_game_btn'>Start Game</button>):(<div></div>)
                 }
                 <button className="btn copyBtn" onClick={copyRoomId}>
                     Copy ROOM ID
@@ -182,7 +304,7 @@ const Whiteboard = () => {
                 </button>
             </div>
             <div className="leftaside">
-                <Drawingboard socketRef={socketRef} roomId={roomId} name={name}/>
+                <Drawingboard socketRef={socketRef} roomId={roomId} name={name} isDrawer={isDrawer}/>
             </div>
 
             <div className='chat-div'>
@@ -192,15 +314,27 @@ const Whiteboard = () => {
                     {Chathistory.map((payload,index)=>{
                         return(
                             <>
-                                <div className='onechatdiv'>
-                                    <div className='chatusernamediv'>
-                                        <p className='chatusername'>{payload.name}:  </p>
-                                    </div>
-                                    <div className='chatmsgdiv'>
-                                        <p className="chatmsg" key={index}>{payload.chat}</p>
-                                    </div>
+                                {
+                                    index%2 ? (<div className='onechatdiv'>
+                                        <div className='chatusernamediv'>
+                                            <p className='chatusername'>{payload.name}:  </p>
+                                        </div>
+                                        <div className='chatmsgdiv'>
+                                            <p className="chatmsg" key={index}>{payload.chat}</p>
+                                        </div>
                                     
-                                </div>
+                                    </div>):
+                                    (<div className='onechatdiv1'>
+                                        <div className='chatusernamediv'>
+                                            <p className='chatusername'>{payload.name}:  </p>
+                                        </div>
+                                        <div className='chatmsgdiv'>
+                                            <p className="chatmsg" key={index}>{payload.chat}</p>
+                                        </div>
+                                    
+                                    </div>)
+                                }
+                                
                             </>
                         )
                     })}

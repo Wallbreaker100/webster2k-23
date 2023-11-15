@@ -261,7 +261,7 @@ const usePressedKeys = () => {
 
 
 
-const DrawingBoard = ({socketRef,roomId,name}) => {
+const DrawingBoard = ({socketRef,roomId,name,isDrawer}) => {
 
   //initialising default variables-------------------------------------------------------------------------
   const [img,setImg]=useState(null);
@@ -611,7 +611,7 @@ const DrawingBoard = ({socketRef,roomId,name}) => {
     <>
       
     {
-      temp ? (
+      isDrawer ? (
         <div className="outerdiv_for_drawingboard">
       
       <div className="toolbox_div">
@@ -660,6 +660,13 @@ const DrawingBoard = ({socketRef,roomId,name}) => {
           onChange={() => setTool("eraser")}
         />
         <label htmlFor="eraser">Eraser</label>
+        <input
+          type="radio"
+          id="fill"
+          checked={tool === "fill"}
+          onChange={() => setTool("fill")}
+        />
+        <label htmlFor="eraser">Fill</label>
 
         <input type="radio" id="text" checked={tool === "text"} onChange={() => setTool("text")} />
         <label htmlFor="text">Text</label>

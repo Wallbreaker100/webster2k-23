@@ -38,6 +38,7 @@ const favouriteImages=require("./models/favouriteImages.js");
 //creating map for socektid's and their cooresponding username--------------------------------------------------------------
 
 const userSocketMap = {};
+const gamestatsSocketMap={};
 
 //using routes for handling post and get requests-----------------------------------------------------
 
@@ -105,6 +106,24 @@ io.on('connection', (socket) => {
         });
     });
 
+    //game logic begins----------------------------------------------------------------------------------------
+
+    socket.on("choosedrawer",({roomId})=>{
+        console.log("the scoket is: ");
+        const clients= getAllConnectedClients(roomId);
+        var rand=Math.floor((Math.random() * clients.length) + 1);
+        var chosensocketid=clients[rand-1].socketId;
+        var drawername=userSocketMap[chosensocketid];
+        clients.forEach(({ socketId }) => {
+            io.to(socketId).emit("drawerchosen",{
+                chosensocketid,
+                socketId,
+                drawername,
+            });
+        });
+        console.log(drawername);
+    })
+
 
     //making socket fucntion for chat section------------------------------------------------------------------
     
@@ -128,6 +147,7 @@ io.on('connection', (socket) => {
             });
         });
         delete userSocketMap[socket.id];
+        delete gamestatsSocketMap[socket.id];
         socket.leave();
     });
 });

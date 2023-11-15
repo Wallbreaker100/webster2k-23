@@ -1,9 +1,31 @@
+
+
+/* initialising global css*/
 *{
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   scroll-behavior: smooth;
 }
+
+
+::-webkit-scrollbar {
+  width: 0.625rem;
+  background-color: var(--lightblue);
+  outline: 1px solid slategrey;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: var(--lightblue);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: var(--blue);
+}
+
+
 
 h1,h2,h3{
   color:var(--primarycolor);
@@ -254,5 +276,47 @@ footer a:hover {
   margin-top: 15px;
   margin-left: 10px;
   margin-bottom: 10px;
+}
+
+.choosewordmaindiv{
+  position: absolute;
+  width:100vw;
+  height:100vh;
+  z-index:300000;
+  opacity:0.8;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  flex-direction: column;
+  background-color: var(--secondarycolor);
+}
+
+.chooseworddiv{
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.whoisdrawingdiv{
+  position: absolute;
+  width:100vw;
+  height:100vh;
+  z-index:300000;
+  opacity:0.8;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  background-color: var(--secondarycolor);
+}
+
+.wordsbtn{
+  padding:13px 20px;
+  background-color:var(--primarycolor);
+  margin-right: 30px;
+  border: none;
+  color:white;
+  font-weight: 700;
+  font-size: 15px;
 }
 
