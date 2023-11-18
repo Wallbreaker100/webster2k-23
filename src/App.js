@@ -9,7 +9,7 @@ function App() {
   return (
     <>
       <div>
-        <Toaster position="top-right" toastOptions={
+        <Toaster position="top-middle" toastOptions={
           
           {success:{
             style: {
@@ -19,7 +19,7 @@ function App() {
               padding: '16px',
             },
             theme:{
-              primary:"hsl(179, 93%, 44%)",
+              primary:"hsl(0, 0%, 78%)",
             }
           }}
         }>

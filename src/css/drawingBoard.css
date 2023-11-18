@@ -25,6 +25,9 @@
     background-color: white;
     color:var(--blue);
     padding-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .undo_redo_div{
@@ -61,18 +64,18 @@ label{
     background-color: var(--darkishwhite);
     padding:5px;
     display: flex;
-    word-break: break-all;
+    white-space: normal;
     overflow-x:hidden;
     border-bottom: 3px solid white;
 }
 
-.onechatdiv1{
-    background-color: white;
-    padding:5px;
-    display: flex;
-    word-break: break-all;
-    overflow-x:hidden;
-    border-bottom: 3px solid white;
+.onechatdiv p{
+    color:black;
+}
+
+.onechatdiv span{
+    color:black;
+    font-weight: 700;
 }
 
 .chatmsg{
@@ -89,4 +92,104 @@ label{
 }
 .chatmsgdiv{
     flex:0.95;
+}
+
+.wordchosen{
+    color:var(--Backgroundcolor);
+    font-size: 15px;
+}
+
+.codewordDiv{
+    position: absolute;
+    left:30%;
+    bottom: 30px;
+    z-index: 1000000;
+}
+
+.codewordDiv p{
+    color:var(--Backgroundcolor);
+    font-size: 17px;
+}
+
+.gtime1{
+    color:white;
+}
+.gtimediv1{
+    background-color: var(--primarycolor);
+    position: absolute;
+    bottom: 30px;
+    right:370px;
+    padding: 10px 15px;
+}
+
+
+
+.correctanswerdiv{
+    background-color: #CFFFBD;
+    padding:5px;
+    display: flex;
+    white-space: normal;
+    overflow-x:hidden;
+    border-bottom: 3px solid white;
+}
+
+.correctanswerdiv p{
+    color:green;
+    font-weight:600;
+}
+.wordchosendiv{
+    margin-left: 280px;
+    background-color:var(--primarycolor);
+    padding: 10px 15px;
+}
+.wordchosendiv span{
+    font-weight: 700;
+    color:white;
+}
+.wordchosendiv p{
+    color:black;
+    font-weight: 500;
+}
+.gtimediv{
+    background-color: var(--primarycolor);
+    padding: 10px 15px;
+    margin-left: 60px;
+}
+.gtime{
+    color:white;
+}
+
+.roundresultdiv{
+    position: absolute;
+    height:100vh;
+    width:100vw;
+    display: flex;
+    align-items: center;
+    background-color: var(--Backgroundcolor);
+    opacity: 0.7;
+    z-index:100000000000;
+    flex-direction: column;
+    padding:50px;
+}
+
+.roundresult_innerdiv{
+    display: flex;
+    flex-direction: column;
+    margin-top: 100px;
+}
+
+.roundresultdiv span{
+    font-weight: 600;
+    color:white;
+    text-transform: capitalize;
+    margin-right: 50px;
+}
+.notscored{
+    color:red;
+    font-size: 19px;
+}
+
+.scored{
+    color:green;
+    font-size: 19px;
 }

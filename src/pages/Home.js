@@ -6,6 +6,7 @@ import Mainpage from '../components/homecomponents/Mainpage.js';
 
 const Home = () => {
   const {isAuthenticated } = useAuth0();
+  
   return (
     <>
       <Navbar/> 

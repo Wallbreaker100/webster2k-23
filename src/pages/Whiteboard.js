@@ -6,13 +6,15 @@ import { initSocket } from '../socket';
 import Drawingboard from '../components/Drawingboard';
 import logo from "./../images/scribble.png"
 import { useAuth0 } from "@auth0/auth0-react";
-
+import correctsound from "./../images/correct_sound.wav";
+import nextlevelsound from "./../images/nextlevel.mp3"
 import {
     useLocation,
     useNavigate,
     Navigate,
     useParams,
 } from 'react-router-dom';
+import { clear } from '@testing-library/user-event/dist/clear';
 
 
 //list of words--------------------------------------------------------------------------------------
@@ -83,7 +85,7 @@ const Whiteboard = () => {
     const [shouldishow,setshouldishow]=useState(0);
     const [drawer,setdrawer]=useState("sarthak");
     const [mysocketid,setmysocketid]=useState(0);
-
+    const [guessCorrect,setguessCorrect]=useState(0);
     const reactNavigator = useNavigate();
     if(isAuthenticated!=true){
         reactNavigator('/');
@@ -95,11 +97,19 @@ const Whiteboard = () => {
     const [clients, setClients] = useState([]);
     const name=location.state?.username;
     const isHost=location.state.isHost;
+    const [ctime,setctime]=useState(20);
+    const [gtime,setgtime]=useState(30);
+    const [restime,setrestime]=useState(8);
+    const [showres,setshowres]=useState(0);
+    const [levelscores,setlevelscores]=useState(null);
+    const [levelword,setlevelword]=useState("");
+    const [drawersocketid,setdrawersocketid]=useState("");
+    const [start,setstart]=useState(false);
     // console.log("am i the host "+isHost);
-    //initilising timer for game-----------------------------------------------------------------------------
 
-    var choosewordTimer=10;
-    var gameTimer=30;
+    //initilising timer for settimeouts-----------------------------------------------------------------------------
+
+    var ctimer,gtimer,restimer;
 
     //iniitialising socket using useeffect----------------------------------------------------------------------
     useEffect(() => {
@@ -131,6 +141,7 @@ const Whiteboard = () => {
                         console.log(`${username} joined`);
                     }
                     setClients(clients);
+                    setmysocketid(socketId);
                 }
             );
 
@@ -168,15 +179,20 @@ const Whiteboard = () => {
     useEffect(()=>{
         if(socketRef.current==null) return;
         socketRef.current.on("sentchat",(payload)=>{
-            console.log(payload.name +" "+payload.chat);
+            // console.log(payload.mysocketid+" "+mysocketid);
+            if(payload.isguesscorrect==1 && payload.mysocketid==payload.socketId){
+                console.log("playing sound");
+                playcorrectsound();
+            }
             setChathistory([...Chathistory,payload]);
+            // console.log(payload.clients);
+            setClients(payload.clients);
         })
-    },[Chathistory,socketRef.current]);
+    },[socketRef.current,Chathistory]);
 
     //copying to clipboard code--------------------------------------------------------------------------
     async function copyRoomId() {
         try {
-            console.log(roomId);
             await navigator.clipboard.writeText(roomId);
             toast.success('Room ID has been copied to your clipboard');
         } catch (err) {
@@ -187,7 +203,7 @@ const Whiteboard = () => {
 
     //handling change in input box------------------------------------------------------
 
-    async function inputchange(e){
+    function inputchange(e){
         let val=e.target.value;
         setChatval(val);
         console.log(Chatval);
@@ -195,14 +211,15 @@ const Whiteboard = () => {
 
     //sending chat button function---------------------------------------------------------
     
-    async function sendChatFunc(){
+    function sendChatFunc(){
         if(Chatval=="") return;
-        console.log("sendchat clicked");
-        console.log(socketRef.current);
+        setguessCorrect(0);
         socketRef.current.emit("sendchat",{
             roomId,
             Chatval,
             name,
+            mysocketid,
+            gtime
         });
         setChatval("");
     };
@@ -211,7 +228,9 @@ const Whiteboard = () => {
     //start game function for host----------------------------------------------------------------
 
     async function chooseDrawer(){
+        console.log("choosing artist");
         setgamestarted(1);
+        setstart(true);
         socketRef.current.emit("choosedrawer",{
             roomId,
         });
@@ -224,27 +243,122 @@ const Whiteboard = () => {
                 var rand1=Math.floor(Math.random() *10);
                 var rand2=10+Math.floor(Math.random() *10);
                 var rand3=20+Math.floor(Math.random() *10);
-                console.log("the word is: "+words[rand1]);
+                
                 setisDrawer(1);
                 setshouldishow(1);
                 setchosenwords([rand1,rand2,rand3]);
             }
-            else setshouldishow(1);
+            else{
+                setshouldishow(1);
+                setisDrawer(0);
+            }
             setdrawer(drawername);
+            setdrawersocketid(chosensocketid);
             setmysocketid(socketId);
             // console.log("drawer: "+drawername);
         })
         
-    },[socketRef.current,drawer,isDrawer,mysocketid])
+    },[socketRef.current])
     
-    //function called when the drawer chooses the word he has to draw
+    //function called when the drawer chooses the word he has to draw--------------------------------------------------
 
-    async function wordSelected(){
+    async function wordSelected(e){
+        var word=e.target.value;
+        socketRef.current.emit("storeChosenWordInBackend",{
+            roomId,
+            word,
+            mysocketid
+        })
+    }
+
+    //setting timer for choosing a word-----------------------------------------------------------------
+
+    useEffect(()=>{
+        if(socketRef.current==null) return;
+        socketRef.current.on("showtimetochooser",({countdown,chosensocketid})=>{
+            console.log(countdown);
+            // console.log(mysocketid + " " + chosensocketid);
+            if(mysocketid==chosensocketid && countdown<=1){
+                console.log("choose me");
+                socketRef.current.emit("storeChosenWordInBackend",{
+                    roomId,
+                    word:words[chosenwords[0]],
+                    mysocketid
+                });
+                return;
+            }
+            else if(mysocketid==chosensocketid){
+                setctime(countdown);
+            }
+        })
+    },[socketRef.current]);
+
+    useEffect(()=>{
+        if(socketRef.current==null) return;
+
+        socketRef.current.on("showtimetoguessers",({countdown,chosensocketid,socketId})=>{
+            console.log("showtime: "+countdown);
+            if(countdown<=0 && socketId==chosensocketid){
+                console.log("calling");
+                socketRef.current.emit("endround",{
+                    roomId,
+                    mysocketid,
+                    countdown
+                });
+                return;
+            }
+            else if(countdown<=0) return;
+            else setgtime(countdown);
+        })
+
         
+    },[socketRef.current])
+
+    
+
+    //playing sound function-----------------------------------------------------------------
+
+    function playcorrectsound(){
+        new Audio(correctsound).play();
+    }
+    function playnextlevelsound(){
+        new Audio(nextlevelsound).play();
+    }
+
+  
+
+    //to turn of display of choose word div-------------------------------------------------
+    function switchofblack(){
+        setshouldishow(0);
     }
     
 
-    //leaving room button 
+    //ending of round request---------------------------------------------------------------
+    useEffect(()=>{
+        if(socketRef.current==null) return;
+        if(showres==1) return;
+        socketRef.current.on("movetonextround",({socketId,rounddata,word})=>{
+            console.log(rounddata);
+            setshowres(1);
+            setlevelscores(rounddata);
+            setlevelword(word);
+            playnextlevelsound();
+        })
+    },[socketRef.current]);
+
+    useEffect(()=>{
+        if(socketRef.current==null) return;
+        socketRef.current.on("stopres",({roomId,drawersocket,socketId})=>{
+            console.log("stopping");
+            setshowres(0);
+            if(socketId==drawersocket){
+                chooseDrawer();
+                return;
+            }
+        })
+    },[socketRef.current])
+
+    //leaving room button ----------------------------------------------------------------------------
     function leaveRoom() {
         reactNavigator('/');
     }
@@ -257,21 +371,41 @@ const Whiteboard = () => {
     return (
         <div className="mainWrap">
             {
-                isDrawer && shouldishow ? <div className='choosewordmaindiv'>
+                isDrawer && shouldishow ? (<div className='choosewordmaindiv'>
                     <p>Choose The Word:</p>
                     <div className='chooseworddiv'>
                         <button onClick={wordSelected} value={words[chosenwords[0]]} className='wordsbtn'>{words[chosenwords[0]]}</button>
                         <button onClick={wordSelected} value={words[chosenwords[1]]} className='wordsbtn'>{words[chosenwords[1]]}</button>
                         <button onClick={wordSelected} value={words[chosenwords[2]]} className='wordsbtn'>{words[chosenwords[2]]}</button>
                     </div>
-                </div>:
-                <div></div>
+                    <h1>{ctime}</h1>
+                </div>):
+                <></>
             }
 
             {
-                !isDrawer && shouldishow ? <div className='whoisdrawingdiv'><p>{drawer} is choosing the word!!</p></div>:<div></div>
+                !isDrawer && shouldishow ? <div className='whoisdrawingdiv'><p>{drawer} is choosing the word!!</p></div>:<></>
             }
 
+            {
+                showres ? (<div className='roundresultdiv'>
+                    <h3>The Chosen Word Was: <span>{levelword}</span></h3>
+                    <div className='roundresult_innerdiv'>
+                        {
+                            levelscores.map((userlevelscore)=>{
+                                console.log(userlevelscore);
+                                return(
+                                    (userlevelscore.roundpoints==0) ? <div>
+                                        <p className='notscored'><span>{userlevelscore.username} : </span>  {userlevelscore.roundpoints}</p>
+                                    </div>:<div>
+                                        <p className='scored'><span>{userlevelscore.username} :</span>   +{userlevelscore.roundpoints}</p>
+                                    </div>
+                                )
+                            })
+                        }
+                    </div>
+                </div>):<></>
+            }
 
             <div className="aside">
                 <div className="asideInner">
@@ -289,6 +423,7 @@ const Whiteboard = () => {
                             <Client
                                 key={client.socketId}
                                 username={client.username}
+                                points={client.points}
                             />
                         ))}
                     </div>
@@ -304,33 +439,29 @@ const Whiteboard = () => {
                 </button>
             </div>
             <div className="leftaside">
-                <Drawingboard socketRef={socketRef} roomId={roomId} name={name} isDrawer={isDrawer}/>
+                <Drawingboard socketRef={socketRef} roomId={roomId} name={name} isDrawer={isDrawer} switchofblack={switchofblack} gtime={gtime}/>
             </div>
 
             <div className='chat-div'>
                 <h3 className='chatheading'>Chat Box</h3>
                 <div className='chat_topdiv'>
-                    {/* <Chat chatval={Chathistory}/> */}
                     {Chathistory.map((payload,index)=>{
                         return(
                             <>
                                 {
-                                    index%2 ? (<div className='onechatdiv'>
-                                        <div className='chatusernamediv'>
-                                            <p className='chatusername'>{payload.name}:  </p>
-                                        </div>
-                                        <div className='chatmsgdiv'>
-                                            <p className="chatmsg" key={index}>{payload.chat}</p>
-                                        </div>
-                                    
+                                    payload.isguesscorrect ? (<div className='correctanswerdiv'>
+
+                                        <p>{payload.name} has guessed the word correctly 🎉🎉!!</p>
+
                                     </div>):
-                                    (<div className='onechatdiv1'>
-                                        <div className='chatusernamediv'>
+                                    (<div className='onechatdiv'>
+                                        <p><span>{payload.name} : </span>{payload.chat}</p>
+                                        {/* <div className='chatusernamediv'>
                                             <p className='chatusername'>{payload.name}:  </p>
                                         </div>
                                         <div className='chatmsgdiv'>
                                             <p className="chatmsg" key={index}>{payload.chat}</p>
-                                        </div>
+                                        </div> */}
                                     
                                     </div>)
                                 }

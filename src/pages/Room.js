@@ -87,15 +87,11 @@ const Room = () => {
                             Join
                         </button>
                         <span className="createInfo">
-                            If you don't have an invite then create &nbsp;
-                            <a
-                                onClick={createNewRoom}
-                                href=""
-                                className="createNewBtn"
-                            >
-                                new room
-                            </a>
+                            If you don't have an invite then create <br></br>
+                           
                         </span>
+                        <p onClick={createNewRoom} className="createNewBtn">New Room</p>
+                        
                     </div>
                 </div>
                 

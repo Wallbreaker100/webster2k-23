@@ -261,7 +261,7 @@ const usePressedKeys = () => {
 
 
 
-const DrawingBoard = ({socketRef,roomId,name,isDrawer}) => {
+const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametime,gtime}) => {
 
   //initialising default variables-------------------------------------------------------------------------
   const [img,setImg]=useState(null);
@@ -272,26 +272,36 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer}) => {
   const [panOffset, setPanOffset] = useState({ x:0, y: 0 });
   const [startPanMousePosition, setStartPanMousePosition] =useState({ x: 0, y: 0 });
   const [Thickness,setThickness]=useState(5);
-  const [color,setColor]=useState("#FF0000")
+  const [color,setColor]=useState("#FF0000");
+  const [wordchosen,setwordchosen]=useState("");
+
+
   const textAreaRef = useRef();
   const pressedKeys = usePressedKeys();
   let canvasRef=useRef(null);
   let temp=(name==="a");
-
-
+  
   //uselayout hook used-------------------------------------------------------------------------------
 
   useEffect(() => {
-    if(socketRef.current!=null){
-      // console.log("data");
-      socketRef.current.on("whiteBoardDataResponse", ({imgUrl}) => {
-        console.log("enter: "+imgUrl);
-        setImg(imgUrl);
-      });
-    }
+    if(socketRef.current==null) return;
+    socketRef.current.on("whiteBoardDataResponse", ({imgUrl}) => {
+      // console.log("enter: "+imgUrl);
+      setImg(imgUrl);
+    });
    
   }, [socketRef.current, canvasRef]);
 
+  useEffect(()=>{
+    if(socketRef.current==null) return;
+    socketRef.current.on("wordchosenChanges",({word,mysocketid,coded,socketId})=>{
+      if(socketId==mysocketid){
+        setwordchosen(word);
+      }
+      else setwordchosen(coded);
+      switchofblack();
+    })
+  },[socketRef.current,wordchosen])
 
 
 
@@ -675,6 +685,12 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer}) => {
         <button onClick={undo}>Undo</button>
         <button onClick={redo}>Redo</button>
         <button id="clear_canvas" onClick={clearCanavs} className="clear_canvas_btn">Clear Canvas</button>
+        {
+          (wordchosen!="") ? <div className="wordchosendiv"><p className="wordchosen"><span>Word Selected: </span>{wordchosen}</p></div>:<></>
+        }
+        {
+          (wordchosen!="") ? <div className="gtimediv"><h2 className="gtime">{gtime}</h2></div>:<></>
+        }
       </div>
       
       <canvas
@@ -694,11 +710,20 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer}) => {
       ) :
       (
         <div className="col-md-8 overflow-hidden border border-dark px-0 mx-auto mt-3" style={{ height: "100vh", width: "100vw", backgroundColor: "white" }}>
-        <img
-          className="viewerimg"
-          src={img}
-        />
-      </div>
+          <img
+            className="viewerimg"
+            src={img}
+          />
+          {
+            (wordchosen!="") ? <div className="codewordDiv">
+            <p>Coded Word: {wordchosen}</p>
+            </div>:<></>
+          }
+          {
+            (wordchosen!="") ? <div className="gtimediv1"><h2 className="gtime1">{gtime}</h2></div>:<></>
+          }
+          
+        </div>
       )
     }
     
