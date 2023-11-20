@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs/bundled/rough.esm";
 import getStroke from "perfect-freehand";
 import "./../css/drawingBoard.css"
+import { FaMousePointer } from "react-icons/fa";
 const generator = rough.generator();
 
 
@@ -18,8 +19,11 @@ const createElement = (id, x1, y1, x2, y2, type) => {
           : generator.rectangle(x1, y1, x2 - x1, y2 - y1);
       return { id, x1, y1, x2, y2, type, roughElement };
     case "circle":
-      const roughCircle=generator.circle(x1,y1,50);
-      return {id,x1,y1,x2,y2,type,roughCircle};
+      const circle = generator.circle(x1, y1, Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)); // Calculate radius based on distance between points
+      return { id, x1, y1, x2, y2, type, roughElement: circle };
+    case "ellipse":
+      const ellipse= generator.ellipse(x1, y1, Math.sqrt((x2 - x1) ** 2) ,Math.sqrt((y2 - y1) ** 2)); // Calculate radius based on distance between points
+      return { id, x1, y1, x2, y2, type, roughElement: ellipse };
     case "pencil":
       return { id, type, points: [{ x: x1, y: y1 }] };
     case "eraser":
@@ -65,6 +69,13 @@ const positionWithinElement = (x, y, element) => {
       const bottomRight = nearPoint(x, y, x2, y2, "br");
       const inside = x >= x1 && x <= x2 && y >= y1 && y <= y2 ? "inside" : null;
       return topLeft || topRight || bottomLeft || bottomRight || inside;
+    case "circle":
+      // const onthecircle=(Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)==Math.sqrt((x - x1) ** 2 + (y - y1) ** 2))
+      // console.log("circlec: "+type+" "+x1+" "+x2+" "+y1+" "+y2+" "+x+" "+y);
+      // const insidethecircle=(Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)-80>=Math.sqrt((x - x1) ** 2 + (y - y1) ** 2));
+      // console.log(insidethecircle);
+      // return insidethecircle;
+      return false;
     case "pencil":
       const betweenAnyPoint = element.points.some((point, index) => {
         const nextPoint = element.points[index + 1];
@@ -197,6 +208,7 @@ const drawElement = (roughCanvas, context, element,color,Thickness) => {
     case "line":
     case "rectangle":
     case "circle":
+    case "ellipse":
       roughCanvas.draw(element.roughElement);
       break;
     case "pencil":
@@ -274,7 +286,7 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
   const [Thickness,setThickness]=useState(5);
   const [color,setColor]=useState("#FF0000");
   const [wordchosen,setwordchosen]=useState("");
-
+  const [mousepos,setmousepos]=useState([200,200]);
 
   const textAreaRef = useRef();
   const pressedKeys = usePressedKeys();
@@ -420,11 +432,11 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
     switch (type) {
       case "line":
       case "rectangle":
-        elementsCopy[id] = createElement(id, x1, y1, x2, y2, type);
-        break;
       case "circle":
+      case "ellipse":
         elementsCopy[id] = createElement(id, x1, y1, x2, y2, type);
         break;
+     
       case "pencil":
         case "eraser":
         elementsCopy[id].points = [...elementsCopy[id].points, { x: x2, y: y2 }];
@@ -512,6 +524,12 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
   //handling mouse moving -----------------------------------------------------------------------------------------
   const handleMouseMove = event => {
     const { clientX, clientY } = getMouseCoordinates(event);
+
+    socketRef.current.emit("showpointertoothers",{
+      roomId,
+      clientX,
+      clientY
+    })
 
     if (action === "panning") {
       const deltaX = clientX - startPanMousePosition.x;
@@ -614,7 +632,13 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
     setElements([]);
   }
 
-
+  //handling moving of mouse pointers------------------------------------------------
+  useEffect(()=>{
+    if(socketRef.current==null) return;
+    socketRef.current.on("movingpointer",({roomId,clientX,clientY})=>{
+      setmousepos([clientX,clientY]);
+    })
+  },[socketRef.current,mousepos]);
 
 
   return (
@@ -647,14 +671,14 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
           checked={tool === "circle"}
           onChange={() => setTool("circle")}
         />
-        <label htmlFor="rectangle">Circle</label>
+        <label htmlFor="circle">Circle</label>
         <input
           type="radio"
-          id="trapezium"
-          checked={tool === "trapezium"}
-          onChange={() => setTool("trapezium")}
+          id="ellipse"
+          checked={tool === "ellipse"}
+          onChange={() => setTool("ellipse")}
         />
-        <label htmlFor="rectangle">Trapezium</label>
+        <label htmlFor="ellipse">Ellipse</label>
         <input
           type="radio"
           id="pencil"
@@ -710,6 +734,10 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
       ) :
       (
         <div className="col-md-8 overflow-hidden border border-dark px-0 mx-auto mt-3" style={{ height: "100vh", width: "100vw", backgroundColor: "white" }}>
+          <div className="mousediv" style={{left:mousepos[0],top:mousepos[1]}}>
+            <FaMousePointer style={{color:'#097969'}}/>
+            <p></p>
+          </div>
           <img
             className="viewerimg"
             src={img}

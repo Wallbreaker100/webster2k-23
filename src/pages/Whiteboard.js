@@ -15,7 +15,7 @@ import {
     useParams,
 } from 'react-router-dom';
 import { clear } from '@testing-library/user-event/dist/clear';
-
+import Standing from "./../components/Standing"
 
 //list of words--------------------------------------------------------------------------------------
 const words=[
@@ -105,6 +105,8 @@ const Whiteboard = () => {
     const [levelword,setlevelword]=useState("");
     const [drawersocketid,setdrawersocketid]=useState("");
     const [start,setstart]=useState(false);
+    const [standings,setstandings]=useState([]);
+    const [showstandings,setshowstandings]=useState(0);
     // console.log("am i the host "+isHost);
 
     //initilising timer for settimeouts-----------------------------------------------------------------------------
@@ -258,7 +260,7 @@ const Whiteboard = () => {
             // console.log("drawer: "+drawername);
         })
         
-    },[socketRef.current])
+    },[socketRef.current,chosenwords,isDrawer,shouldishow,drawer,drawersocketid,mysocketid])
     
     //function called when the drawer chooses the word he has to draw--------------------------------------------------
 
@@ -278,11 +280,12 @@ const Whiteboard = () => {
         socketRef.current.on("showtimetochooser",({countdown,chosensocketid})=>{
             console.log(countdown);
             // console.log(mysocketid + " " + chosensocketid);
-            if(mysocketid==chosensocketid && countdown<=1){
+            if(mysocketid==chosensocketid && countdown<=0){
                 console.log("choose me");
+                console.log(chosenwords);
                 socketRef.current.emit("storeChosenWordInBackend",{
                     roomId,
-                    word:words[chosenwords[0]],
+                    word:words[Math.floor((Math.random() * words.length))],
                     mysocketid
                 });
                 return;
@@ -358,6 +361,32 @@ const Whiteboard = () => {
         })
     },[socketRef.current])
 
+    useEffect(()=>{
+        if(socketRef.current==null) return;
+        socketRef.current.on("showfinalres",({clients,roomId,socketId})=>{
+            clients.sort(function(a,b){
+                return b.points - a.points;
+            });
+            // console.log(clients);
+            setshowstandings(1);
+            setstandings(clients);
+        })
+    },[socketRef.current,standings,showstandings])
+
+
+    //warning for wrong language------------------------------------------------------------
+    useEffect(()=>{
+        if(socketRef.current==null) return;
+        socketRef.current.on("warning",({roomId,ct})=>{
+            alert(`(${ct}/3)Please Look into your language.Doing it multiple times can lead to banning your chat functionality😡😡😡!!`)
+        });
+        
+    },[socketRef.current])
+
+    //moving mouse pointer--------------------------------------------------------------------
+
+    
+
     //leaving room button ----------------------------------------------------------------------------
     function leaveRoom() {
         reactNavigator('/');
@@ -405,6 +434,52 @@ const Whiteboard = () => {
                         }
                     </div>
                 </div>):<></>
+            }
+
+            {
+                showstandings?<div className='showstandings'>
+                    <div className='standings_outerdiv'>
+                        <div className='standings_innerdiv'>
+                            {standings.map((payload,index)=>{
+                                if(index==0){
+                                    return(
+                                        <div className='individual_standings gold'>
+                                            <div className='standings_name'><p>{payload.username}:</p></div>
+                                            <div className='standings_points'><p>{payload.points}</p></div>
+                                        </div>
+                                    )
+                                }
+                                else if(index==1){
+                                    return(
+                                        <div className='individual_standings silver'>
+                                            <div className='standings_name'><p>{payload.username}</p></div>
+                                            <div className='standings_points'><p>{payload.points}</p></div>
+                                        </div>
+                                    )
+                                }
+                                else if(index==2){
+                                    return(
+                                        <div className='individual_standings bronze'>
+                                            <div className='standings_name'><p>{payload.username}</p></div>
+                                            <div className='standings_points'><p>{payload.points}</p></div>
+                                        </div>
+                                    )
+                                }
+                                else{
+                                    return(
+                                        <div className='individual_standings nomedal'>
+                                            <div className='standings_name'><p>{payload.username}</p></div>
+                                            <div className='standings_points'><p>{payload.points}</p></div>
+                                        </div>
+                                    )
+                                }
+                            })}
+                        </div>
+
+                        <button>End Game</button>
+                        
+                    </div>
+                </div>:<></>
             }
 
             <div className="aside">

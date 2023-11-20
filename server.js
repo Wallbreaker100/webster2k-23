@@ -10,6 +10,8 @@ const bodyParser = require('body-parser');
 const server = http.createServer(app);
 const io = new Server(server);
 const cors = require('cors');
+var Filter = require('bad-words'),
+filter = new Filter();
 
 //setting cors error-------------------------------------------------------------------------------------------------------
 const corsOptions = {
@@ -38,12 +40,14 @@ const favouriteImages=require("./models/favouriteImages.js");
 const userSocketMap = {};
 const numberofroundsMap={};
 var wordMap={};
+var codedMap={};
 var gameStarted={};
 var drawerselectedforroom={};
 var currentroundscoresMap={};
 var timerMap={};
 var countdownMap={};
 var ctMap={};
+var flagcountMap={};
 //using routes for handling post and get requests-----------------------------------------------------
 
 
@@ -55,9 +59,9 @@ function getAllConnectedClients(roomId) {
     return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map(
         (socketId) => {
             return {
+                points:userSocketMap[socketId][1],
                 socketId,
                 username:userSocketMap[socketId][0],
-                points:userSocketMap[socketId][1],
             };
         }
     );
@@ -68,15 +72,15 @@ function getdataforcurrentround(roomId){
         (socketId) => {
             if(currentroundscoresMap[socketId]!=null){
                 return {
-                    socketId,
                     roundpoints:currentroundscoresMap[socketId],
+                    socketId,
                     username:userSocketMap[socketId][0]
                 };
             }
             else{
                 return {
-                    socketId,
                     roundpoints:0,
+                    socketId,
                     username:userSocketMap[socketId][0]
                 };
             }
@@ -150,7 +154,7 @@ io.on('connection', (socket) => {
         if(clients.length==0) return;
         var rand=Math.floor((Math.random() * clients.length) + 1);
         var chosensocketid=clients[rand-1].socketId;
-        var drawername=userSocketMap[chosensocketid];
+        var drawername=userSocketMap[chosensocketid][0];
         drawerselectedforroom[roomId]=chosensocketid;
         gameStarted[roomId]=1;
         
@@ -193,16 +197,22 @@ io.on('connection', (socket) => {
     //word chosen by drawer is coming from client sidde--------------------------------------------------------
 
     socket.on("storeChosenWordInBackend",({roomId,word,mysocketid})=>{
+        console.log("choosing without click");
         clearInterval(timerMap[roomId]);
         var timer;
         timerMap[roomId]=timer;
-        if(word==null) return;
+        if(word==null){
+            console.log("stuck");
+            return;
+        }
         wordMap[roomId]=[word,mysocketid];
         const clients=getAllConnectedClients(roomId);
         var coded="";
         for(let i=0;i<word.length;i++){
-            coded=coded+"*  ";
+            coded=coded+"__   ";
         }
+        
+        
         clients.forEach(({ socketId }) => {
             io.to(socketId).emit("wordchosenChanges",{
                 word,
@@ -211,6 +221,8 @@ io.on('connection', (socket) => {
                 socketId
             });
         });
+
+        //this is the time given to guesser--------------------------------------------------------
         countdownMap[roomId]=60;
         startguesstime(roomId,wordMap[roomId][1],roomId,clients);
     })
@@ -227,13 +239,26 @@ io.on('connection', (socket) => {
                 return;
             }
             countdownMap[roomId]=countdownMap[roomId]-1;
-            clients.forEach(({ socketId }) => {
-                io.to(socketId).emit("showtimetoguessers",{
-                    countdown:countdownMap[roomId],
-                    chosensocketid,
-                    socketId
+            if(countdownMap[roomId]>=30 && countdownMap[roomId]<=50){
+                clients.forEach(({ socketId }) => {
+                    io.to(socketId).emit("showtimetoguessers",{
+                        countdown:countdownMap[roomId],
+                        chosensocketid,
+                        socketId,
+                    });
                 });
-            });
+            }
+            else{
+                clients.forEach(({ socketId }) => {
+                    io.to(socketId).emit("showtimetoguessers",{
+                        countdown:countdownMap[roomId],
+                        chosensocketid,
+                        socketId,
+                        codeWord:codedMap[2]
+                    });
+                });
+            }
+            
             
         },1000);
         return () => clearInterval(timerMap[roomId])
@@ -243,7 +268,21 @@ io.on('connection', (socket) => {
     
     socket.on("sendchat",({roomId,Chatval,name,mysocketid,gtime})=>{
         // console.log("sending");
-        
+        var filteredword=filter.clean(Chatval);
+        if(filteredword!=Chatval){
+            if(flagcountMap[mysocketid]==null){
+                flagcountMap[mysocketid]=1;
+            }
+            else flagcountMap[mysocketid]++;
+            io.to(mysocketid).emit("warning",{
+                roomId,
+                ct:flagcountMap[mysocketid]
+            })
+            return;
+        }
+        if(flagcountMap[mysocketid]>=3){
+            return;
+        }
         var isguesscorrect=0;
         if(gameStarted[roomId]){
             if(Chatval.toLowerCase()==wordMap[roomId][0] && mysocketid==drawerselectedforroom[roomId]) return;
@@ -295,14 +334,19 @@ io.on('connection', (socket) => {
         var drawersocket=wordMap[roomId][1];
         console.log("current round: "+numberofroundsMap[roomId]);
         // console.log("round: "+rounddata[mysocketid]);
-        if(numberofroundsMap[roomId]>=3){
+        if(numberofroundsMap[roomId]>=2){
             clearInterval(timerMap[roomId]);
-            console.log("game ended");
-            // clients.forEach(({ socketId }) => {
-            //     io.to(socketId).emit("endgame", {
-                    
-            //     });
-            // });
+            // const sorted = [...rounddata].sort((a, b) => b[0] - a[0]);
+            // const map2 = new Map(sorted);
+            // console.log(map2);
+            console.log("end dound emit function called (round ended)");
+            clients.forEach(({ socketId }) => {
+                io.to(socketId).emit("showfinalres", {
+                    clients,
+                    roomId,
+                    socketId
+                });
+            });
             return;
         }
         else{
@@ -364,6 +408,16 @@ io.on('connection', (socket) => {
         clearTimeout(timerMap[roomId]);
     }
 
+
+    //moving the mouse pointer-------------------------------------------
+    socket.on("showpointertoothers",({roomId,clientX,clientY})=>{
+        socket.broadcast.to(roomId).emit("movingpointer", {
+            roomId,
+            clientX,
+            clientY
+        });
+    })
+
     socket.on('disconnecting', () => {
         const rooms = [...socket.rooms];
         rooms.forEach((roomId) => {
@@ -373,6 +427,7 @@ io.on('connection', (socket) => {
             });
         });
         delete userSocketMap[socket.id];
+        delete flagcountMap[socket.id];
         socket.leave();
     });
 });

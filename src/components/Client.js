@@ -3,9 +3,9 @@ import Avatar from 'react-avatar';
 
 
 //client avatar component
-const Client = ({ username ,points}) => {
+const Client = ({key, username ,points}) => {
     return (
-        <div className="client">
+        <div value={key} className="client">
             <Avatar name={username} size={50} round="14px" />
             <span className="userName">{username}</span>
             <span>{points}</span>
