@@ -286,7 +286,7 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
   const [Thickness,setThickness]=useState(5);
   const [color,setColor]=useState("#FF0000");
   const [wordchosen,setwordchosen]=useState("");
-  const [mousepos,setmousepos]=useState([200,200]);
+  const [mousepos,setmousepos]=useState([200,200,""]);
 
   const textAreaRef = useRef();
   const pressedKeys = usePressedKeys();
@@ -528,7 +528,8 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
     socketRef.current.emit("showpointertoothers",{
       roomId,
       clientX,
-      clientY
+      clientY,
+      name
     })
 
     if (action === "panning") {
@@ -635,8 +636,8 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
   //handling moving of mouse pointers------------------------------------------------
   useEffect(()=>{
     if(socketRef.current==null) return;
-    socketRef.current.on("movingpointer",({roomId,clientX,clientY})=>{
-      setmousepos([clientX,clientY]);
+    socketRef.current.on("movingpointer",({roomId,clientX,clientY,name})=>{
+      setmousepos([clientX,clientY,name]);
     })
   },[socketRef.current,mousepos]);
 
@@ -736,7 +737,7 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
         <div className="col-md-8 overflow-hidden border border-dark px-0 mx-auto mt-3" style={{ height: "100vh", width: "100vw", backgroundColor: "white" }}>
           <div className="mousediv" style={{left:mousepos[0],top:mousepos[1]}}>
             <FaMousePointer style={{color:'#097969'}}/>
-            <p></p>
+            <p>{mousepos[2]}</p>
           </div>
           <img
             className="viewerimg"

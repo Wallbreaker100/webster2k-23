@@ -8,7 +8,9 @@
     --darkishwhite:hsl(0, 0%, 78%);
 }
 
-
+.mainpage_div{
+    overflow: hidden;
+}
 .slider_div{
     position:relative;
 }

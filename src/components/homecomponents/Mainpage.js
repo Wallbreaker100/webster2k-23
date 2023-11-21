@@ -88,6 +88,8 @@ const Mainpage = () => {
 
   return (
     <>
+      <div className='mainpage_div'>
+        
       <div className='slider_div'>
         <div onClick={gotoprev} className='left'><FaAngleLeft/></div>
         <div onClick={gotonext} className='right'><FaAngleRight/></div>
@@ -100,6 +102,7 @@ const Mainpage = () => {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </>
   )

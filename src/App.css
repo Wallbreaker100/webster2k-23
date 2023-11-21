@@ -8,6 +8,9 @@
   scroll-behavior: smooth;
 }
 
+/* .monitor_div{
+  height:637px;
+} */
 
 ::-webkit-scrollbar {
   width: 0.625rem;

@@ -13,7 +13,7 @@ router.use(express.json());
 router.post("/storeuser",async (req,res)=>{
     try{
 
-       console.log("storing info");
+    //    console.log("storing info");
        const data=req.body;
        const email=data.email;
        const username=data.nickname;
@@ -22,7 +22,7 @@ router.post("/storeuser",async (req,res)=>{
             const userdata=new usermodel({
                 name:data.nickname,
                 email:data.email,
-                isOnline:true,
+                isOnline:"yes",
             })
             userdata.save();
        }

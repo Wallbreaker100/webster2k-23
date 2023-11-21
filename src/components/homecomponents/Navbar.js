@@ -5,11 +5,11 @@ import { useAuth0 } from "@auth0/auth0-react"
 
 
 //html code for navbar
-const Navbar = () => {
+const Navbar = ({email}) => {
 
   //using auth0 feature for shwoing logout button on authentication
-  const { logout,isAuthenticated } = useAuth0();
-  
+  const { user,logout,isAuthenticated } = useAuth0();
+  // var url="/profile/"+email;
   return (
     <>
       <div className='outernav'>
@@ -18,9 +18,12 @@ const Navbar = () => {
           <h3>PICASSO</h3>
         </div>
         <div className='innerdiv2'> 
-          <a href="/mainpage">Home</a>
+          <a href="/">Home</a>
           <a>Play</a>
           <a>Create</a>
+          {
+            isAuthenticated ?<a href="/profile">Profile</a>:<></>
+          }
           {
             isAuthenticated && <button className="logoutbtn" onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>Log Out</button>
           }

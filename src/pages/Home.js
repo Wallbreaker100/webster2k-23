@@ -5,14 +5,18 @@ import { useAuth0 } from "@auth0/auth0-react";
 import Mainpage from '../components/homecomponents/Mainpage.js';
 
 const Home = () => {
-  const {isAuthenticated } = useAuth0();
-  
+  const {user,isAuthenticated } = useAuth0();
+  var email="";
+  if(isAuthenticated) email=user.email;
   return (
     <>
-      <Navbar/> 
-      {
-        isAuthenticated?<Mainpage/>:<Description/>
-      }
+      <div className='monitor_div'>
+        <Navbar email={email}/> 
+        {
+          isAuthenticated ?<Mainpage />:<Description/>
+        }
+      </div>
+      
     </>
   )
 }

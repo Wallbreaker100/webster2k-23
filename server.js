@@ -33,6 +33,7 @@ app.use(express.json());
 const userDetail=require("./models/userDetail.js");
 const gameHistory=require("./models/gameHistory.js");
 const favouriteImages=require("./models/favouriteImages.js");
+const livegames=require("./models/currentlivegames.js");
 
 
 //creating map for socektid's and their cooresponding data--------------------------------------------------------------
@@ -52,11 +53,14 @@ var flagcountMap={};
 
 const storeuser=require("./routes/storeuser");
 const offline=require("./routes/offline");
+const findfriends=require("./routes/findfriends")
 const storesocketid=require("./middlewares/storesocketid.js");
 const updatepoints=require("./middlewares/updatepoints");
+
 //using the routes created-----------------------------------------------------------------
 app.use(storeuser);
 app.use(offline);
+app.use(findfriends);
 
 //function to get all connected clients in a particular room-----------------------------------------------
 function getAllConnectedClients(roomId) {
@@ -229,7 +233,7 @@ io.on('connection', (socket) => {
         });
 
         //this is the time given to guesser--------------------------------------------------------
-        countdownMap[roomId]=50;
+        countdownMap[roomId]=60;
         startguesstime(roomId,wordMap[roomId][1],roomId,clients);
     })
 
@@ -292,6 +296,7 @@ io.on('connection', (socket) => {
         var isguesscorrect=0;
         if(gameStarted[roomId]){
             if(Chatval.toLowerCase()==wordMap[roomId][0] && mysocketid==drawerselectedforroom[roomId]) return;
+            if(Chatval.toLowerCase()==wordMap[roomId][0] && currentroundscoresMap[mysocketid]!=null) return;
             if(Chatval.toLowerCase()==wordMap[roomId][0]){
                 isguesscorrect=1;
                 userSocketMap[drawerselectedforroom[roomId]][1]+=5;
@@ -346,7 +351,7 @@ io.on('connection', (socket) => {
             console.log("end dound emit function called (round ended)");
             var rank=1;
             clients.forEach(({ socketId }) => {
-                updatepoints(socketId,rank);
+                updatepoints(socketId,rank,userSocketMap[socketId][1]);
                 io.to(socketId).emit("showfinalres", {
                     clients,
                     roomId,
@@ -413,21 +418,27 @@ io.on('connection', (socket) => {
     }
 
     async function cleartimer(roomId){
-        console.log("timer removing");
+        // console.log("timer removing");
         clearTimeout(timerMap[roomId]);
     }
 
 
     //moving the mouse pointer-------------------------------------------
-    socket.on("showpointertoothers",({roomId,clientX,clientY})=>{
+    socket.on("showpointertoothers",({roomId,clientX,clientY,name})=>{
         socket.broadcast.to(roomId).emit("movingpointer", {
             roomId,
             clientX,
-            clientY
+            clientY,
+            name
         });
     })
 
     socket.on('disconnecting', () => {
+        userDetail.updateOne({socketId:socket.id},{
+            $set:{
+                isOnline:"no",
+            }
+        });
         const rooms = [...socket.rooms];
         rooms.forEach((roomId) => {
             socket.in(roomId).emit(ACTIONS.DISCONNECTED, {
