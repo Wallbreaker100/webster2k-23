@@ -6,7 +6,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 const Description = () => {
   //using auth0 for authentication
   const { user,loginWithRedirect} = useAuth0();
-
+ 
   return (
     
     <div className='outerdesdiv'>

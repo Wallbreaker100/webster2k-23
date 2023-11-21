@@ -1,9 +1,43 @@
 import React,{useState} from 'react';
 import './../../css/carousel.css'
 import {FaAngleRight,FaAngleLeft} from "react-icons/fa6";
+import { useAuth0 } from "@auth0/auth0-react";
+
 //main page to be shown after authentication
 const Mainpage = () => {
   const [ct,setct]=useState(0);
+  const { user} = useAuth0();
+  console.log(user);
+
+  const storeuserindb=fetch("http://localhost:5000/storeuser",{
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    credentials: 'include',
+    body: JSON.stringify(user),
+  });
+
+
+  // window.addEventListener("beforeunload", function (e) {
+  //   e.preventDefault(); // If you want a confirmation dialog
+  //   e.returnValue = ''; // If you want a confirmation dialog
+
+  //   fetch("http://localhost:5000/offline",{
+  //     method: 'POST',
+  //     headers: {
+  //         'Content-Type': 'application/json'
+  //     },
+  //     credentials: 'include',
+  //     body: JSON.stringify(user),
+  //   }).then(response => console.log('Page unload event sent to server.'))
+  //   .catch(error => console.log('Error occurred while sending page unload event to server.'));
+  //   delete e['returnValue'];
+  //   return;
+    
+  // });
+
+    
 
   //slider data for changing states
   const arr=[

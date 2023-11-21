@@ -5,8 +5,9 @@ import "./../css/drawingBoard.css";
 //client avatar component
 const Standing = ({standings}) => {
     <div className='standings_outerdiv'>
-        <h2>Congratulations To All Winners 🎉🎉🎉!!</h2>
+        
         <div className='standings_innerdiv'>
+            <h1>Congratulations To All Winners 🎉🎉🎉!!</h1>
             {standings.map((payload,index)=>{
                 if(index==0){
                     return(
@@ -43,7 +44,7 @@ const Standing = ({standings}) => {
             })}
         </div>
 
-        <button className='loginbtn'>End Game</button>
+        <button className='endgamebtn'>End Game</button>
         
     </div>
     

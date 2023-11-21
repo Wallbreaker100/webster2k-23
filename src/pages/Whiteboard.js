@@ -7,7 +7,8 @@ import Drawingboard from '../components/Drawingboard';
 import logo from "./../images/scribble.png"
 import { useAuth0 } from "@auth0/auth0-react";
 import correctsound from "./../images/correct_sound.wav";
-import nextlevelsound from "./../images/nextlevel.mp3"
+import nextlevelsound from "./../images/nextlevel.mp3";
+import endgamesound from "./../images/endroundsound.mp3";
 import {
     useLocation,
     useNavigate,
@@ -76,6 +77,7 @@ const words=[
 
 
 const Whiteboard = () => {
+    const navigate = useNavigate();
     const {isAuthenticated,user} = useAuth0();
     const [Chatval,setChatval]=useState("");
     const [Chathistory,setChathistory]=useState([]);
@@ -132,6 +134,7 @@ const Whiteboard = () => {
             socketRef.current.emit(ACTIONS.JOIN, {
                 roomId,
                 username: location.state?.username,
+                email:user.email
             });
 
             // Listening for joined event
@@ -370,9 +373,12 @@ const Whiteboard = () => {
             // console.log(clients);
             setshowstandings(1);
             setstandings(clients);
+            playendgamesound();
         })
     },[socketRef.current,standings,showstandings])
-
+    function playendgamesound(){
+        new Audio(endgamesound).play();
+    }
 
     //warning for wrong language------------------------------------------------------------
     useEffect(()=>{
@@ -388,6 +394,11 @@ const Whiteboard = () => {
     
 
     //leaving room button ----------------------------------------------------------------------------
+    async function goBackToMainPage(e){
+        navigate(`/`, {
+           
+        });
+    }
     function leaveRoom() {
         reactNavigator('/');
     }
@@ -439,6 +450,7 @@ const Whiteboard = () => {
             {
                 showstandings?<div className='showstandings'>
                     <div className='standings_outerdiv'>
+                        <h2>Congratulations To All Winners 🎉🎉🎉!!</h2>
                         <div className='standings_innerdiv'>
                             {standings.map((payload,index)=>{
                                 if(index==0){
@@ -476,7 +488,7 @@ const Whiteboard = () => {
                             })}
                         </div>
 
-                        <button>End Game</button>
+                        <button onClick={goBackToMainPage}className='endgamebtn'>End Game</button>
                         
                     </div>
                 </div>:<></>

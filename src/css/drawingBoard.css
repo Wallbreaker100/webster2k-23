@@ -217,23 +217,26 @@ label{
     z-index: 10000000000000000000000;
     flex-direction: column;
     align-items: center;
+    padding:30px;
 }
 .standings_outerdiv p{
-    color:white;
+    color:black;
 }
 
 .standings_innerdiv{
     background-color: var(--Backgroundcolor);
     margin-top: 200px;
-    width:400px;
+    width:600px;
 }
 
 .individual_standings{
     display: flex;
+    padding:10px;
 }
 .standings_name{
     flex:0.8;
     padding: 2px;
+    font-weight: 700;
 }
 .standings_points{
     flex:0.2;
@@ -245,7 +248,7 @@ label{
 }
 
 .silver{
-    background-color:#C0C0C0 ;
+    background-color:#666664 ;
 }
 
 .bronze{
@@ -253,5 +256,17 @@ label{
 }
 
 .nomedal{
-    background-color: var(--darkishwhite);
+    background-color: white;
+}
+
+.endgamebtn{
+    margin-top:40px;
+    padding:15px 30px;
+    width:fit-content;
+    background-color: var(--primarycolor);
+    color:var(--white);
+    font-size:18px;
+    font-weight: bold;
+    box-shadow: 0 0 1.5625rem 0.625rem var(--blue);
+    border: none;
 }

@@ -6,7 +6,10 @@ const userDetailSchema = new mongoose.Schema({
   email:String,
   socketId:String,
   friends:[],
-  isOnline:Boolean,
+  isOnline:{
+    type:String,
+    default:"no"
+  },
   friendRequest:[]
 });
 

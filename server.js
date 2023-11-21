@@ -50,8 +50,13 @@ var ctMap={};
 var flagcountMap={};
 //using routes for handling post and get requests-----------------------------------------------------
 
-
-
+const storeuser=require("./routes/storeuser");
+const offline=require("./routes/offline");
+const storesocketid=require("./middlewares/storesocketid.js");
+const updatepoints=require("./middlewares/updatepoints");
+//using the routes created-----------------------------------------------------------------
+app.use(storeuser);
+app.use(offline);
 
 //function to get all connected clients in a particular room-----------------------------------------------
 function getAllConnectedClients(roomId) {
@@ -109,13 +114,14 @@ app.post("/findRooms",async (req,res)=>{
 });
 
 
-
 //establishing socket connection for backend--------------------------------------------------------------
 
 io.on('connection', (socket) => {
     console.log('socket connected', socket.id);
-
-    socket.on(ACTIONS.JOIN, ({ roomId, username }) => {
+    
+    socket.on(ACTIONS.JOIN, ({ roomId, username,email }) => {
+        // console.log(socket.id);
+        storesocketid(socket.id,email);
         var timer;
         timerMap[roomId]=timer;
         userSocketMap[socket.id] = [username,0];
@@ -194,7 +200,7 @@ io.on('connection', (socket) => {
         },1000);
         return () => clearInterval(timerMap[roomId])
     }
-    //word chosen by drawer is coming from client sidde--------------------------------------------------------
+    //word chosen by drawer is coming from client side--------------------------------------------------------
 
     socket.on("storeChosenWordInBackend",({roomId,word,mysocketid})=>{
         console.log("choosing without click");
@@ -223,7 +229,7 @@ io.on('connection', (socket) => {
         });
 
         //this is the time given to guesser--------------------------------------------------------
-        countdownMap[roomId]=60;
+        countdownMap[roomId]=50;
         startguesstime(roomId,wordMap[roomId][1],roomId,clients);
     })
 
@@ -334,18 +340,21 @@ io.on('connection', (socket) => {
         var drawersocket=wordMap[roomId][1];
         console.log("current round: "+numberofroundsMap[roomId]);
         // console.log("round: "+rounddata[mysocketid]);
-        if(numberofroundsMap[roomId]>=2){
+        if(numberofroundsMap[roomId]>=1){
             clearInterval(timerMap[roomId]);
-            // const sorted = [...rounddata].sort((a, b) => b[0] - a[0]);
-            // const map2 = new Map(sorted);
-            // console.log(map2);
+            
             console.log("end dound emit function called (round ended)");
+            var rank=1;
             clients.forEach(({ socketId }) => {
+                updatepoints(socketId,rank);
                 io.to(socketId).emit("showfinalres", {
                     clients,
                     roomId,
                     socketId
                 });
+                // console.log("server: "+socketId);
+                
+                rank++;
             });
             return;
         }
