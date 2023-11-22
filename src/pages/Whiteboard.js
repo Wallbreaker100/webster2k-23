@@ -1,570 +1,667 @@
-import React, { useState, useRef, useEffect } from 'react';
-import toast from 'react-hot-toast';
-import ACTIONS from '../Actions';
-import Client from '../components/Client';
-import { initSocket } from '../socket';
-import Drawingboard from '../components/Drawingboard';
-import logo from "./../images/scribble.png"
+import React, { useState, useRef, useEffect } from "react";
+import toast from "react-hot-toast";
+import ACTIONS from "../Actions";
+import Client from "../components/Client";
+import { initSocket } from "../socket";
+import Drawingboard from "../components/Drawingboard";
+import logo from "./../images/scribble.png";
 import { useAuth0 } from "@auth0/auth0-react";
 import correctsound from "./../images/correct_sound.wav";
 import nextlevelsound from "./../images/nextlevel.mp3";
 import endgamesound from "./../images/endroundsound.mp3";
 import {
-    useLocation,
-    useNavigate,
-    Navigate,
-    useParams,
-} from 'react-router-dom';
-import { clear } from '@testing-library/user-event/dist/clear';
-import Standing from "./../components/Standing"
+  useLocation,
+  useNavigate,
+  Navigate,
+  useParams,
+} from "react-router-dom";
+import { clear } from "@testing-library/user-event/dist/clear";
+// import Standing from "./../components/Standing"
+import SpeechRecognition, {
+  useSpeechRecognition,
+} from "react-speech-recognition";
+import { CiMicrophoneOn, CiMicrophoneOff } from "react-icons/ci";
 
 //list of words--------------------------------------------------------------------------------------
-const words=[
-    "apple",
-    "basketball",
-    "candle",
-    "dolphin",
-    "envelope",
-    "fireworks",
-    "giraffe",
-    "hamburger",
-    "island",
-    "jigsaw",
-    "kangaroo",
-    "lighthouse",
-    "magnet",
-    "notebook",
-    "octopus",
-    "penguin",
-    "quilt",
-    "robot",
-    "sailboat",
-    "tiger",
-    "umbrella",
-    "violin",
-    "watermelon",
-    "xylophone",
-    "yoga",
-    "zeppelin",
-    "astronaut",
-    "butterfly",
-    "compass",
-    "diamond",
-    "eagle",
-    "flamingo",
-    "globe",
-    "hockey",
-    "igloo",
-    "jellyfish",
-    "koala",
-    "lemonade",
-    "mermaid",
-    "ninja",
-    "puzzle",
-    "rhinoceros",
-    "spaceship",
-    "tornado",
-    "unicorn",
-    "volcano",
-    "waffle",
-    "xylograph",
-    "yacht",
-    "zebra"
-      
-]
-
-
-
+const words = [
+  "apple",
+  "basketball",
+  "candle",
+  "dolphin",
+  "envelope",
+  "fireworks",
+  "giraffe",
+  "hamburger",
+  "island",
+  "jigsaw",
+  "kangaroo",
+  "lighthouse",
+  "magnet",
+  "notebook",
+  "octopus",
+  "penguin",
+  "quilt",
+  "robot",
+  "sailboat",
+  "tiger",
+  "umbrella",
+  "violin",
+  "watermelon",
+  "xylophone",
+  "yoga",
+  "zeppelin",
+  "astronaut",
+  "butterfly",
+  "compass",
+  "diamond",
+  "eagle",
+  "flamingo",
+  "globe",
+  "hockey",
+  "igloo",
+  "jellyfish",
+  "koala",
+  "lemonade",
+  "mermaid",
+  "ninja",
+  "puzzle",
+  "rhinoceros",
+  "spaceship",
+  "tornado",
+  "unicorn",
+  "volcano",
+  "waffle",
+  "xylograph",
+  "yacht",
+  "zebra",
+];
 
 const Whiteboard = () => {
-    const navigate = useNavigate();
-    const {isAuthenticated,user} = useAuth0();
-    const [Chatval,setChatval]=useState("");
-    const [Chathistory,setChathistory]=useState([]);
-    const [gamestarted,setgamestarted]=useState(0);
-    const [isDrawer,setisDrawer]=useState(0);
-    const [chosenwords,setchosenwords]=useState([]);
-    const [shouldishow,setshouldishow]=useState(0);
-    const [drawer,setdrawer]=useState("sarthak");
-    const [mysocketid,setmysocketid]=useState(0);
-    const [guessCorrect,setguessCorrect]=useState(0);
-    const reactNavigator = useNavigate();
-    if(isAuthenticated!=true){
-        reactNavigator('/');
-    }
-    const socketRef = useRef(null);
-    const location = useLocation();
-    const { roomId } = useParams();
-    // const reactNavigator = useNavigate();
-    const [clients, setClients] = useState([]);
-    const name=location.state?.username;
-    const isHost=location.state.isHost;
-    const [ctime,setctime]=useState(20);
-    const [gtime,setgtime]=useState(30);
-    const [restime,setrestime]=useState(8);
-    const [showres,setshowres]=useState(0);
-    const [levelscores,setlevelscores]=useState(null);
-    const [levelword,setlevelword]=useState("");
-    const [drawersocketid,setdrawersocketid]=useState("");
-    const [start,setstart]=useState(false);
-    const [standings,setstandings]=useState([]);
-    const [showstandings,setshowstandings]=useState(0);
-    // console.log("am i the host "+isHost);
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth0();
+  const [Chatval, setChatval] = useState("");
+  const [Chathistory, setChathistory] = useState([]);
+  const [gamestarted, setgamestarted] = useState(0);
+  const [isDrawer, setisDrawer] = useState(0);
+  const [chosenwords, setchosenwords] = useState([]);
+  const [shouldishow, setshouldishow] = useState(0);
+  const [drawer, setdrawer] = useState("sarthak");
+  const [mysocketid, setmysocketid] = useState(0);
+  const [guessCorrect, setguessCorrect] = useState(0);
+  const reactNavigator = useNavigate();
+  if (isAuthenticated != true) {
+    reactNavigator("/");
+  }
+  const socketRef = useRef(null);
+  const location = useLocation();
+  const { roomId } = useParams();
+  // const reactNavigator = useNavigate();
+  const [clients, setClients] = useState([]);
+  const name = location.state?.username;
+  const isHost = location.state.isHost;
+  const [ctime, setctime] = useState(20);
+  const [gtime, setgtime] = useState(30);
+  const [restime, setrestime] = useState(8);
+  const [showres, setshowres] = useState(0);
+  const [levelscores, setlevelscores] = useState(null);
+  const [levelword, setlevelword] = useState("");
+  const [drawersocketid, setdrawersocketid] = useState("");
+  const [start, setstart] = useState(false);
+  const [standings, setstandings] = useState([]);
+  const [showstandings, setshowstandings] = useState(0);
+  const [showspeech, setshowspeech] = useState(0);
+  // console.log("am i the host "+isHost);
 
-    //initilising timer for settimeouts-----------------------------------------------------------------------------
+  //making speech recognition--------------------------------------------------------------------------
+  const startListening = () => {
+    SpeechRecognition.startListening({ continuous: true });
+  };
+  const stoplistening = () => {
+    setChatval(transcript);
+    resetTranscript();
+    SpeechRecognition.stopListening();
+  };
+  var { transcript, browserSupportsSpeechRecognition, resetTranscript } =
+    useSpeechRecognition();
+  // if (!browserSupportsSpeechRecognition) {
+  //     return null;
+  // }
 
-    var ctimer,gtimer,restimer;
+  //initilising timer for settimeouts-----------------------------------------------------------------------------
 
-    //iniitialising socket using useeffect----------------------------------------------------------------------
-    useEffect(() => {
-        const init = async () => {
-            socketRef.current = await initSocket();
-            socketRef.current.on('connect_error', (err) => handleErrors(err));
-            socketRef.current.on('connect_failed', (err) => handleErrors(err));
-            
+  var ctimer, gtimer, restimer;
 
-            //handling errors
-            function handleErrors(e) {
-                console.log('socket error', e);
-                toast.error('Socket connection failed, try again later.');
-                reactNavigator('/');
-            }
-            
-            //joining socket
-            socketRef.current.emit(ACTIONS.JOIN, {
-                roomId,
-                username: location.state?.username,
-                email:user.email
-            });
+  //iniitialising socket using useeffect----------------------------------------------------------------------
+  useEffect(() => {
+    const init = async () => {
+      socketRef.current = await initSocket();
+      socketRef.current.on("connect_error", (err) => handleErrors(err));
+      socketRef.current.on("connect_failed", (err) => handleErrors(err));
 
-            // Listening for joined event
-            socketRef.current.on(
-                ACTIONS.JOINED,
-                ({ clients, username, socketId }) => {
-                    if (username !== location.state?.username) {
-                        toast.success(`${username} joined the room.`);
-                        console.log(`${username} joined`);
-                    }
-                    setClients(clients);
-                    setmysocketid(socketId);
-                }
-            );
+      //handling errors
+      function handleErrors(e) {
+        console.log("socket error", e);
+        toast.error("Socket connection failed, try again later.");
+        reactNavigator("/");
+      }
 
-            //handling sentchat response coming from backend
-            // socketRef.current.on("sentchat",(payload)=>{
-            //     console.log("chat recievd");
-            //     console.log(payload.name +" "+payload.chat);
-            //     console.log("the history is "+Chathistory);
-            //     setChathistory([...Chathistory,payload]);
-            // });
+      //joining socket
+      socketRef.current.emit(ACTIONS.JOIN, {
+        roomId,
+        username: location.state?.username,
+        email: user.email,
+        Private:location.state?.Private
+      });
 
-            // Listening for disconnected
-            socketRef.current.on(
-                ACTIONS.DISCONNECTED,
-                ({ socketId, username }) => {
-                    toast.success(`${username} left the room.`);
-                    setClients((prev) => {
-                        return prev.filter(
-                            (client) => client.socketId !== socketId
-                        );
-                    });
-                }
-            );
-            
-        };
-        init();
-        return () => {
-            //disconnecting events of socket
-            socketRef.current.disconnect();
-            socketRef.current.off(ACTIONS.JOINED);
-            socketRef.current.off(ACTIONS.DISCONNECTED);
-        };
-    },[]);
-
-    useEffect(()=>{
-        if(socketRef.current==null) return;
-        socketRef.current.on("sentchat",(payload)=>{
-            // console.log(payload.mysocketid+" "+mysocketid);
-            if(payload.isguesscorrect==1 && payload.mysocketid==payload.socketId){
-                console.log("playing sound");
-                playcorrectsound();
-            }
-            setChathistory([...Chathistory,payload]);
-            // console.log(payload.clients);
-            setClients(payload.clients);
-        })
-    },[socketRef.current,Chathistory]);
-
-    //copying to clipboard code--------------------------------------------------------------------------
-    async function copyRoomId() {
-        try {
-            await navigator.clipboard.writeText(roomId);
-            toast.success('Room ID has been copied to your clipboard');
-        } catch (err) {
-            toast.error('Could not copy the Room ID');
-            console.error(err);
+      // Listening for joined event
+      socketRef.current.on(
+        ACTIONS.JOINED,
+        ({ clients, username, socketId }) => {
+          if (username !== location.state?.username) {
+            toast.success(`${username} joined the room.`);
+            console.log(`${username} joined`);
+          }
+          setClients(clients);
+          setmysocketid(socketId);
         }
-    }
+      );
 
-    //handling change in input box------------------------------------------------------
+      //handling sentchat response coming from backend
+      // socketRef.current.on("sentchat",(payload)=>{
+      //     console.log("chat recievd");
+      //     console.log(payload.name +" "+payload.chat);
+      //     console.log("the history is "+Chathistory);
+      //     setChathistory([...Chathistory,payload]);
+      // });
 
-    function inputchange(e){
-        let val=e.target.value;
-        setChatval(val);
-        console.log(Chatval);
-    }
-
-    //sending chat button function---------------------------------------------------------
-    
-    function sendChatFunc(){
-        if(Chatval=="") return;
-        setguessCorrect(0);
-        socketRef.current.emit("sendchat",{
-            roomId,
-            Chatval,
-            name,
-            mysocketid,
-            gtime
+      // Listening for disconnected
+      socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId, username }) => {
+        toast.success(`${username} left the room.`);
+        setClients((prev) => {
+          return prev.filter((client) => client.socketId !== socketId);
         });
-        setChatval("");
+      });
     };
+    init();
+    return () => {
+      //disconnecting events of socket
+      socketRef.current.disconnect();
+      socketRef.current.off(ACTIONS.JOINED);
+      socketRef.current.off(ACTIONS.DISCONNECTED);
+    };
+  }, []);
 
+  useEffect(() => {
+    if (socketRef.current == null) return;
+    socketRef.current.on("sentchat", (payload) => {
+      // console.log(payload.mysocketid+" "+mysocketid);
+      if (
+        payload.isguesscorrect == 1 &&
+        payload.mysocketid == payload.socketId
+      ) {
+        console.log("playing sound");
+        playcorrectsound();
+      }
+      setChathistory([...Chathistory, payload]);
+      // console.log(payload.clients);
+      setClients(payload.clients);
+    });
+  }, [socketRef.current, Chathistory]);
 
-    //start game function for host----------------------------------------------------------------
+  //copying to clipboard code--------------------------------------------------------------------------
+  async function copyRoomId() {
+    try {
+      await navigator.clipboard.writeText(roomId);
+      toast.success("Room ID has been copied to your clipboard");
+    } catch (err) {
+      toast.error("Could not copy the Room ID");
+      console.error(err);
+    }
+  }
 
-    async function chooseDrawer(){
-        console.log("choosing artist");
-        setgamestarted(1);
-        setstart(true);
-        socketRef.current.emit("choosedrawer",{
+  //handling change in input box------------------------------------------------------
+
+  function inputchange(e) {
+    let val = e.target.value;
+    setChatval(val);
+    console.log(Chatval);
+  }
+
+  //sending chat button function---------------------------------------------------------
+
+  function sendChatFunc() {
+    if (Chatval == "") return;
+    setguessCorrect(0);
+    socketRef.current.emit("sendchat", {
+      roomId,
+      Chatval,
+      name,
+      mysocketid,
+      gtime,
+    });
+    setChatval("");
+  }
+
+  //start game function for host----------------------------------------------------------------
+
+  async function chooseDrawer() {
+    console.log("choosing artist");
+    setgamestarted(1);
+    setstart(true);
+    socketRef.current.emit("choosedrawer", {
+      roomId,
+    });
+  }
+
+  useEffect(() => {
+    if (socketRef.current == null) return;
+    socketRef.current.on(
+      "drawerchosen",
+      ({ chosensocketid, socketId, drawername }) => {
+        if (chosensocketid == socketId) {
+          var rand1 = Math.floor(Math.random() * 10);
+          var rand2 = 10 + Math.floor(Math.random() * 10);
+          var rand3 = 20 + Math.floor(Math.random() * 10);
+
+          setisDrawer(1);
+          setshouldishow(1);
+          setchosenwords([rand1, rand2, rand3]);
+        } else {
+          setshouldishow(1);
+          setisDrawer(0);
+        }
+        setdrawer(drawername);
+        setdrawersocketid(chosensocketid);
+        setmysocketid(socketId);
+        // console.log("drawer: "+drawername);
+      }
+    );
+  }, [
+    socketRef.current,
+    chosenwords,
+    isDrawer,
+    shouldishow,
+    drawer,
+    drawersocketid,
+    mysocketid,
+  ]);
+
+  //function called when the drawer chooses the word he has to draw--------------------------------------------------
+
+  async function wordSelected(e) {
+    var word = e.target.value;
+    socketRef.current.emit("storeChosenWordInBackend", {
+      roomId,
+      word,
+      mysocketid,
+    });
+  }
+
+  //setting timer for choosing a word-----------------------------------------------------------------
+
+  useEffect(() => {
+    if (socketRef.current == null) return;
+    socketRef.current.on(
+      "showtimetochooser",
+      ({ countdown, chosensocketid }) => {
+        console.log(countdown);
+        // console.log(mysocketid + " " + chosensocketid);
+        if (mysocketid == chosensocketid && countdown <= 0) {
+          console.log("choose me");
+          console.log(chosenwords);
+          socketRef.current.emit("storeChosenWordInBackend", {
             roomId,
-        });
-    }
+            word: words[Math.floor(Math.random() * words.length)],
+            mysocketid,
+          });
+          return;
+        } else if (mysocketid == chosensocketid) {
+          setctime(countdown);
+        }
+      }
+    );
+  }, [socketRef.current]);
 
-    useEffect(()=>{
-        if(socketRef.current==null) return;
-        socketRef.current.on("drawerchosen",({chosensocketid,socketId,drawername})=>{
-            if(chosensocketid==socketId){
-                var rand1=Math.floor(Math.random() *10);
-                var rand2=10+Math.floor(Math.random() *10);
-                var rand3=20+Math.floor(Math.random() *10);
-                
-                setisDrawer(1);
-                setshouldishow(1);
-                setchosenwords([rand1,rand2,rand3]);
-            }
-            else{
-                setshouldishow(1);
-                setisDrawer(0);
-            }
-            setdrawer(drawername);
-            setdrawersocketid(chosensocketid);
-            setmysocketid(socketId);
-            // console.log("drawer: "+drawername);
-        })
-        
-    },[socketRef.current,chosenwords,isDrawer,shouldishow,drawer,drawersocketid,mysocketid])
-    
-    //function called when the drawer chooses the word he has to draw--------------------------------------------------
+  useEffect(() => {
+    if (socketRef.current == null) return;
 
-    async function wordSelected(e){
-        var word=e.target.value;
-        socketRef.current.emit("storeChosenWordInBackend",{
+    socketRef.current.on(
+      "showtimetoguessers",
+      ({ countdown, chosensocketid, socketId }) => {
+        console.log("showtime: " + countdown);
+        if (countdown <= 0 && socketId == chosensocketid) {
+          console.log("calling");
+          socketRef.current.emit("endround", {
             roomId,
-            word,
-            mysocketid
-        })
-    }
+            mysocketid,
+            countdown,
+          });
+          return;
+        } else if (countdown <= 0) return;
+        else setgtime(countdown);
+      }
+    );
+  }, [socketRef.current]);
 
-    //setting timer for choosing a word-----------------------------------------------------------------
+  //playing sound function-----------------------------------------------------------------
 
-    useEffect(()=>{
-        if(socketRef.current==null) return;
-        socketRef.current.on("showtimetochooser",({countdown,chosensocketid})=>{
-            console.log(countdown);
-            // console.log(mysocketid + " " + chosensocketid);
-            if(mysocketid==chosensocketid && countdown<=0){
-                console.log("choose me");
-                console.log(chosenwords);
-                socketRef.current.emit("storeChosenWordInBackend",{
-                    roomId,
-                    word:words[Math.floor((Math.random() * words.length))],
-                    mysocketid
-                });
-                return;
-            }
-            else if(mysocketid==chosensocketid){
-                setctime(countdown);
-            }
-        })
-    },[socketRef.current]);
+  function playcorrectsound() {
+    new Audio(correctsound).play();
+  }
+  function playnextlevelsound() {
+    new Audio(nextlevelsound).play();
+  }
 
-    useEffect(()=>{
-        if(socketRef.current==null) return;
+  //to turn of display of choose word div-------------------------------------------------
+  function switchofblack() {
+    setshouldishow(0);
+  }
 
-        socketRef.current.on("showtimetoguessers",({countdown,chosensocketid,socketId})=>{
-            console.log("showtime: "+countdown);
-            if(countdown<=0 && socketId==chosensocketid){
-                console.log("calling");
-                socketRef.current.emit("endround",{
-                    roomId,
-                    mysocketid,
-                    countdown
-                });
-                return;
-            }
-            else if(countdown<=0) return;
-            else setgtime(countdown);
-        })
+  //ending of round request---------------------------------------------------------------
+  useEffect(() => {
+    if (socketRef.current == null) return;
+    if (showres == 1) return;
+    socketRef.current.on("movetonextround", ({ socketId, rounddata, word }) => {
+      console.log(rounddata);
+      setshowres(1);
+      setlevelscores(rounddata);
+      setlevelword(word);
+      playnextlevelsound();
+    });
+  }, [socketRef.current]);
 
-        
-    },[socketRef.current])
+  useEffect(() => {
+    if (socketRef.current == null) return;
+    socketRef.current.on("stopres", ({ roomId, drawersocket, socketId }) => {
+      console.log("stopping");
+      setshowres(0);
+      if (socketId == drawersocket) {
+        chooseDrawer();
+        return;
+      }
+    });
+  }, [socketRef.current]);
 
-    
+  useEffect(() => {
+    if (socketRef.current == null) return;
+    socketRef.current.on("showfinalres", ({ clients, roomId, socketId }) => {
+      clients.sort(function (a, b) {
+        return b.points - a.points;
+      });
+      // console.log(clients);
+      setshowstandings(1);
+      setstandings(clients);
+      playendgamesound();
+    });
+  }, [socketRef.current, standings, showstandings]);
+  function playendgamesound() {
+    new Audio(endgamesound).play();
+  }
 
-    //playing sound function-----------------------------------------------------------------
+  //warning for wrong language------------------------------------------------------------
+  useEffect(() => {
+    if (socketRef.current == null) return;
+    socketRef.current.on("warning", ({ roomId, ct }) => {
+      alert(
+        `(${ct}/3)Please Look into your language.Doing it multiple times can lead to banning your chat functionality😡😡😡!!`
+      );
+    });
+  }, [socketRef.current]);
 
-    function playcorrectsound(){
-        new Audio(correctsound).play();
-    }
-    function playnextlevelsound(){
-        new Audio(nextlevelsound).play();
-    }
+  //moving mouse pointer--------------------------------------------------------------------
 
-  
+  //leaving room button ----------------------------------------------------------------------------
+  async function goBackToMainPage(e) {
+    navigate(`/`, {});
+  }
+  function leaveRoom() {
+    reactNavigator("/");
+  }
 
-    //to turn of display of choose word div-------------------------------------------------
-    function switchofblack(){
-        setshouldishow(0);
-    }
-    
+  if (!location.state) {
+    return <Navigate to="/" />;
+  }
 
-    //ending of round request---------------------------------------------------------------
-    useEffect(()=>{
-        if(socketRef.current==null) return;
-        if(showres==1) return;
-        socketRef.current.on("movetonextround",({socketId,rounddata,word})=>{
-            console.log(rounddata);
-            setshowres(1);
-            setlevelscores(rounddata);
-            setlevelword(word);
-            playnextlevelsound();
-        })
-    },[socketRef.current]);
+  //html code for drawing board
+  return (
+    <div className="mainWrap">
+      {isDrawer && shouldishow ? (
+        <div className="choosewordmaindiv">
+          <p>Choose The Word:</p>
+          <div className="chooseworddiv">
+            <button
+              onClick={wordSelected}
+              value={words[chosenwords[0]]}
+              className="wordsbtn"
+            >
+              {words[chosenwords[0]]}
+            </button>
+            <button
+              onClick={wordSelected}
+              value={words[chosenwords[1]]}
+              className="wordsbtn"
+            >
+              {words[chosenwords[1]]}
+            </button>
+            <button
+              onClick={wordSelected}
+              value={words[chosenwords[2]]}
+              className="wordsbtn"
+            >
+              {words[chosenwords[2]]}
+            </button>
+          </div>
+          <h1>{ctime}</h1>
+        </div>
+      ) : (
+        <></>
+      )}
 
-    useEffect(()=>{
-        if(socketRef.current==null) return;
-        socketRef.current.on("stopres",({roomId,drawersocket,socketId})=>{
-            console.log("stopping");
-            setshowres(0);
-            if(socketId==drawersocket){
-                chooseDrawer();
-                return;
-            }
-        })
-    },[socketRef.current])
+      {!isDrawer && shouldishow ? (
+        <div className="whoisdrawingdiv">
+          <p>{drawer} is choosing the word!!</p>
+        </div>
+      ) : (
+        <></>
+      )}
 
-    useEffect(()=>{
-        if(socketRef.current==null) return;
-        socketRef.current.on("showfinalres",({clients,roomId,socketId})=>{
-            clients.sort(function(a,b){
-                return b.points - a.points;
-            });
-            // console.log(clients);
-            setshowstandings(1);
-            setstandings(clients);
-            playendgamesound();
-        })
-    },[socketRef.current,standings,showstandings])
-    function playendgamesound(){
-        new Audio(endgamesound).play();
-    }
-
-    //warning for wrong language------------------------------------------------------------
-    useEffect(()=>{
-        if(socketRef.current==null) return;
-        socketRef.current.on("warning",({roomId,ct})=>{
-            alert(`(${ct}/3)Please Look into your language.Doing it multiple times can lead to banning your chat functionality😡😡😡!!`)
-        });
-        
-    },[socketRef.current])
-
-    //moving mouse pointer--------------------------------------------------------------------
-
-    
-
-    //leaving room button ----------------------------------------------------------------------------
-    async function goBackToMainPage(e){
-        navigate(`/`, {
-           
-        });
-    }
-    function leaveRoom() {
-        reactNavigator('/');
-    }
-
-    if (!location.state) {
-        return <Navigate to="/" />;
-    }
-
-    //html code for drawing board
-    return (
-        <div className="mainWrap">
-            {
-                isDrawer && shouldishow ? (<div className='choosewordmaindiv'>
-                    <p>Choose The Word:</p>
-                    <div className='chooseworddiv'>
-                        <button onClick={wordSelected} value={words[chosenwords[0]]} className='wordsbtn'>{words[chosenwords[0]]}</button>
-                        <button onClick={wordSelected} value={words[chosenwords[1]]} className='wordsbtn'>{words[chosenwords[1]]}</button>
-                        <button onClick={wordSelected} value={words[chosenwords[2]]} className='wordsbtn'>{words[chosenwords[2]]}</button>
-                    </div>
-                    <h1>{ctime}</h1>
-                </div>):
-                <></>
-            }
-
-            {
-                !isDrawer && shouldishow ? <div className='whoisdrawingdiv'><p>{drawer} is choosing the word!!</p></div>:<></>
-            }
-
-            {
-                showres ? (<div className='roundresultdiv'>
-                    <h3>The Chosen Word Was: <span>{levelword}</span></h3>
-                    <div className='roundresult_innerdiv'>
-                        {
-                            levelscores.map((userlevelscore)=>{
-                                console.log(userlevelscore);
-                                return(
-                                    (userlevelscore.roundpoints==0) ? <div>
-                                        <p className='notscored'><span>{userlevelscore.username} : </span>  {userlevelscore.roundpoints}</p>
-                                    </div>:<div>
-                                        <p className='scored'><span>{userlevelscore.username} :</span>   +{userlevelscore.roundpoints}</p>
-                                    </div>
-                                )
-                            })
-                        }
-                    </div>
-                </div>):<></>
-            }
-
-            {
-                showstandings?<div className='showstandings'>
-                    <div className='standings_outerdiv'>
-                        <h2>Congratulations To All Winners 🎉🎉🎉!!</h2>
-                        <div className='standings_innerdiv'>
-                            {standings.map((payload,index)=>{
-                                if(index==0){
-                                    return(
-                                        <div className='individual_standings gold'>
-                                            <div className='standings_name'><p>{payload.username}:</p></div>
-                                            <div className='standings_points'><p>{payload.points}</p></div>
-                                        </div>
-                                    )
-                                }
-                                else if(index==1){
-                                    return(
-                                        <div className='individual_standings silver'>
-                                            <div className='standings_name'><p>{payload.username}</p></div>
-                                            <div className='standings_points'><p>{payload.points}</p></div>
-                                        </div>
-                                    )
-                                }
-                                else if(index==2){
-                                    return(
-                                        <div className='individual_standings bronze'>
-                                            <div className='standings_name'><p>{payload.username}</p></div>
-                                            <div className='standings_points'><p>{payload.points}</p></div>
-                                        </div>
-                                    )
-                                }
-                                else{
-                                    return(
-                                        <div className='individual_standings nomedal'>
-                                            <div className='standings_name'><p>{payload.username}</p></div>
-                                            <div className='standings_points'><p>{payload.points}</p></div>
-                                        </div>
-                                    )
-                                }
-                            })}
-                        </div>
-
-                        <button onClick={goBackToMainPage}className='endgamebtn'>End Game</button>
-                        
-                    </div>
-                </div>:<></>
-            }
-
-            <div className="aside">
-                <div className="asideInner">
-                    <div className="logo">
-                        <img
-                            className="logoImage"
-                            src={logo}
-                            alt="logo"
-                        />
-                        <h2>Picasso</h2>
-                    </div>
-                    <h3>Connected</h3>
-                    <div className="clientsList">
-                        {clients.map((client) => (
-                            <Client
-                                key={client.socketId}
-                                username={client.username}
-                                points={client.points}
-                            />
-                        ))}
-                    </div>
+      {showres ? (
+        <div className="roundresultdiv">
+          <h3>
+            The Chosen Word Was: <span>{levelword}</span>
+          </h3>
+          <div className="roundresult_innerdiv">
+            {levelscores.map((userlevelscore) => {
+              console.log(userlevelscore);
+              return userlevelscore.roundpoints == 0 ? (
+                <div>
+                  <p className="notscored">
+                    <span>{userlevelscore.username} : </span>{" "}
+                    {userlevelscore.roundpoints}
+                  </p>
                 </div>
-                {
-                    isHost && !gamestarted ?(<button onClick={chooseDrawer} className='start_game_btn'>Start Game</button>):(<div></div>)
+              ) : (
+                <div>
+                  <p className="scored">
+                    <span>{userlevelscore.username} :</span> +
+                    {userlevelscore.roundpoints}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <></>
+      )}
+
+      {showstandings ? (
+        <div className="showstandings">
+          <div className="standings_outerdiv">
+            <h2>Congratulations To All Winners 🎉🎉🎉!!</h2>
+            <div className="standings_innerdiv">
+              {standings.map((payload, index) => {
+                if (index == 0) {
+                  return (
+                    <div className="individual_standings gold">
+                      <div className="standings_name">
+                        <p>{payload.username}:</p>
+                      </div>
+                      <div className="standings_points">
+                        <p>{payload.points}</p>
+                      </div>
+                    </div>
+                  );
+                } else if (index == 1) {
+                  return (
+                    <div className="individual_standings silver">
+                      <div className="standings_name">
+                        <p>{payload.username}</p>
+                      </div>
+                      <div className="standings_points">
+                        <p>{payload.points}</p>
+                      </div>
+                    </div>
+                  );
+                } else if (index == 2) {
+                  return (
+                    <div className="individual_standings bronze">
+                      <div className="standings_name">
+                        <p>{payload.username}</p>
+                      </div>
+                      <div className="standings_points">
+                        <p>{payload.points}</p>
+                      </div>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div className="individual_standings nomedal">
+                      <div className="standings_name">
+                        <p>{payload.username}</p>
+                      </div>
+                      <div className="standings_points">
+                        <p>{payload.points}</p>
+                      </div>
+                    </div>
+                  );
                 }
-                <button className="btn copyBtn" onClick={copyRoomId}>
-                    Copy ROOM ID
-                </button>
-                <button className="btn leaveBtn" onClick={leaveRoom}>
-                    Leave
-                </button>
-            </div>
-            <div className="leftaside">
-                <Drawingboard socketRef={socketRef} roomId={roomId} name={name} isDrawer={isDrawer} switchofblack={switchofblack} gtime={gtime}/>
+              })}
             </div>
 
-            <div className='chat-div'>
-                <h3 className='chatheading'>Chat Box</h3>
-                <div className='chat_topdiv'>
-                    {Chathistory.map((payload,index)=>{
-                        return(
-                            <>
-                                {
-                                    payload.isguesscorrect ? (<div className='correctanswerdiv'>
+            <button onClick={goBackToMainPage} className="endgamebtn">
+              End Game
+            </button>
+          </div>
+        </div>
+      ) : (
+        <></>
+      )}
 
-                                        <p>{payload.name} has guessed the word correctly 🎉🎉!!</p>
+      <div className="aside">
+        <div className="asideInner">
+          <div className="logo">
+            <img className="logoImage" src={logo} alt="logo" />
+            <h2>Picasso</h2>
+          </div>
+          <h3>Connected</h3>
+          <div className="clientsList">
+            {clients.map((client) => (
+              <Client
+                key={client.socketId}
+                username={client.username}
+                points={client.points}
+              />
+            ))}
+          </div>
+        </div>
+        {isHost && !gamestarted ? (
+          <button onClick={chooseDrawer} className="start_game_btn">
+            Start Game
+          </button>
+        ) : (
+          <div></div>
+        )}
+        <button className="btn copyBtn" onClick={copyRoomId}>
+          Copy ROOM ID
+        </button>
+        <button className="btn leaveBtn" onClick={leaveRoom}>
+          Leave
+        </button>
+      </div>
+      <div className="leftaside">
+        <Drawingboard
+          socketRef={socketRef}
+          roomId={roomId}
+          name={name}
+          isDrawer={isDrawer}
+          switchofblack={switchofblack}
+          gtime={gtime}
+        />
+      </div>
 
-                                    </div>):
-                                    (<div className='onechatdiv'>
-                                        <p><span>{payload.name} : </span>{payload.chat}</p>
-                                        {/* <div className='chatusernamediv'>
+      <div className="chat-div">
+        <h3 className="chatheading">Chat Box</h3>
+        <div className="chat_topdiv">
+          {Chathistory.map((payload, index) => {
+            return (
+              <>
+                {payload.isguesscorrect ? (
+                  <div className="correctanswerdiv">
+                    <p>{payload.name} has guessed the word correctly 🎉🎉!!</p>
+                  </div>
+                ) : (
+                  <div className="onechatdiv">
+                    <p>
+                      <span>{payload.name} : </span>
+                      {payload.chat}
+                    </p>
+                    {/* <div className='chatusernamediv'>
                                             <p className='chatusername'>{payload.name}:  </p>
                                         </div>
                                         <div className='chatmsgdiv'>
                                             <p className="chatmsg" key={index}>{payload.chat}</p>
                                         </div> */}
-                                    
-                                    </div>)
-                                }
-                                
-                            </>
-                        )
-                    })}
-                </div>  
-                <div className='chat_bottomdiv'>
-                    <input value={Chatval}  name="chat" onChange={inputchange} placeholder="Chat/Guess" className='inputchat'></input>
-                    <button onClick={sendChatFunc} className='sendchat'>send</button>
-                </div>
-            </div>
-                     
+                  </div>
+                )}
+              </>
+            );
+          })}
         </div>
-    );
+        <div className="speech_div">
+          <div className="micon">
+            <CiMicrophoneOn onClick={startListening} className="start_listen" />
+          </div>
+          <div className="micoff">
+            <CiMicrophoneOff onClick={stoplistening} className="start_listen" />
+          </div>
+        </div>
+        <div className="speech_fake_show">{transcript}</div> 
+                {/* {
+                    showspeech ? <div className='chat_bottomdiv'>
+                    <input value={transcript}  name="chat" onChange={inputchange} placeholder="Chat/Guess" className='inputchat'></input>
+                    <button onClick={sendChatFunc} className='sendchat'>send</button>
+                    </div>:
+                    <div className='chat_bottomdiv'>
+                        <input value={Chatval}  name="chat" onChange={inputchange} placeholder="Chat/Guess" className='inputchat'></input>
+                        <button onClick={sendChatFunc} className='sendchat'>send</button>
+                    </div>
+                } */}
+        <div className="chat_bottomdiv">
+          <input
+            value={Chatval}
+            name="chat"
+            onChange={inputchange}
+            placeholder="Chat/Guess"
+            className="inputchat"
+          ></input>
+          <button onClick={sendChatFunc} className="sendchat">
+            send
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default React.memo(Whiteboard);

@@ -6,7 +6,7 @@ import logo from "./../images/scribble.png"
 import { useAuth0 } from "@auth0/auth0-react";
 import Navbar from '../components/homecomponents/Navbar';
 
-const Room = () => {
+const Joinroom = () => {
     const {isAuthenticated,user} = useAuth0();
     const [Private,setPrivate]=useState(0);
     const reactNavigator = useNavigate();
@@ -17,20 +17,14 @@ const Room = () => {
 
     const [roomId, setRoomId] = useState('');
     const [username, setUsername] = useState('');
-    const createNewRoom = async (e) => {
-        e.preventDefault();
-        const id = uuidV4();
-        setRoomId(id);
-        toast.success('Created a new room');
-    };
-
+    
     const joinRoom = async () => {
         var isHost=0;
         if (!roomId || !username) {
             toast.error('ROOM ID & username is required');
             return;
         }
-        const check=await fetch("http://localhost:5000/checkBeforeCreatingRoom",{
+        const check=await fetch("http://localhost:5000/checkBeforeJoiningRoom",{
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -41,7 +35,7 @@ const Room = () => {
         const data=await check.json();
         console.log("check: ",data.value);
         if(data.value=="false" || data.value==false){
-            alert("Same roomid already exist create a new one!!");
+            alert("The Roomid doest not exist!!.Check your Roomid again");
             return;
         }
 
@@ -86,7 +80,7 @@ const Room = () => {
                     <div className="inputGroup">
                         <input
                             type="text"
-                            className="inputBox"
+                            className="inputBox_ofjoinroom"
                             placeholder="ROOM ID"
                             onChange={(e) => setRoomId(e.target.value)}
                             value={roomId}
@@ -94,27 +88,17 @@ const Room = () => {
                         />
                         <input
                             type="text"
-                            className="inputBox"
+                            className="inputBox_ofjoinroom"
                             placeholder="USERNAME"
                             onChange={(e) => setUsername(e.target.value)}
                             value={username}
                             onKeyUp={handleInputEnter}
                         />
                         <div className='switch_div'>
-                            <label class="switch">
-                                <input onChange={()=>setPrivate(!Private)} type="checkbox"/>
-                                <span class="slider round"></span>
-                            </label>
                             <button className="btn joinBtn" onClick={joinRoom}>
-                                Create
+                                Join
                             </button>
                         </div>
-                        
-                        <span className="createInfo">
-                            If you don't have an invite then create <br></br>
-                           
-                        </span>
-                        <p onClick={createNewRoom} className="createNewBtn">New Room</p>
                         
                     </div>
                 </div>
@@ -124,4 +108,4 @@ const Room = () => {
     );
 };
 
-export default React.memo(Room);
+export default React.memo(Joinroom);

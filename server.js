@@ -35,7 +35,6 @@ const gameHistory=require("./models/gameHistory.js");
 const favouriteImages=require("./models/favouriteImages.js");
 const livegames=require("./models/currentlivegames.js");
 
-
 //creating map for socektid's and their cooresponding data--------------------------------------------------------------
 
 const userSocketMap = {};
@@ -55,13 +54,17 @@ const storeuser=require("./routes/storeuser");
 const offline=require("./routes/offline");
 const findfriends=require("./routes/findfriends")
 const storesocketid=require("./middlewares/storesocketid.js");
+const storeGameinDb=require("./middlewares/storeGameinDb.js");
+const deleteLiveGames=require("./middlewares/deleteLiveGames.js");
 const updatepoints=require("./middlewares/updatepoints");
-
+const checkBeforeCreatingRoom=require("./routes/checkBeforeCreatingRoom");
+const checkBeforeJoiningRoom=require("./routes/checkBeforeJoiningRoom");
 //using the routes created-----------------------------------------------------------------
 app.use(storeuser);
 app.use(offline);
 app.use(findfriends);
-
+app.use(checkBeforeCreatingRoom);
+app.use(checkBeforeJoiningRoom);
 //function to get all connected clients in a particular room-----------------------------------------------
 function getAllConnectedClients(roomId) {
     // Map
@@ -76,6 +79,7 @@ function getAllConnectedClients(roomId) {
     );
 }
 
+//function to get data for current ongoing round---------------------------------------------------------------
 function getdataforcurrentround(roomId){
     return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map(
         (socketId) => {
@@ -123,8 +127,9 @@ app.post("/findRooms",async (req,res)=>{
 io.on('connection', (socket) => {
     console.log('socket connected', socket.id);
     
-    socket.on(ACTIONS.JOIN, ({ roomId, username,email }) => {
-        // console.log(socket.id);
+    socket.on(ACTIONS.JOIN, ({ roomId, username,email,Private }) => {
+        console.log("private: ",Private);
+        storeGameinDb(roomId,Private);
         storesocketid(socket.id,email);
         var timer;
         timerMap[roomId]=timer;
@@ -182,14 +187,15 @@ io.on('connection', (socket) => {
         // console.log(drawername);
     })
 
+    //function for choosing the word--------------------------------------------------------------
     async function starchoosingtime(roomId,chosensocketid){
-        console.log("choose time called");
+        // console.log("choose time called");
         countdownMap[roomId]=20;
         clearInterval(timerMap[roomId]);
         var timer;
         timerMap[roomId]=timer;
         timerMap[roomId]=setInterval(()=>{
-            console.log("countdown: "+countdownMap[roomId]);
+            // console.log("countdown: "+countdownMap[roomId]);
             if(countdownMap[roomId]<=0){
                 clearInterval(timerMap[roomId]);
                 var timer;
@@ -207,12 +213,12 @@ io.on('connection', (socket) => {
     //word chosen by drawer is coming from client side--------------------------------------------------------
 
     socket.on("storeChosenWordInBackend",({roomId,word,mysocketid})=>{
-        console.log("choosing without click");
+        // console.log("choosing without click");
         clearInterval(timerMap[roomId]);
         var timer;
         timerMap[roomId]=timer;
         if(word==null){
-            console.log("stuck");
+            // console.log("stuck");
             return;
         }
         wordMap[roomId]=[word,mysocketid];
@@ -237,10 +243,11 @@ io.on('connection', (socket) => {
         startguesstime(roomId,wordMap[roomId][1],roomId,clients);
     })
 
+    //function to start guess time to guess the chosen word-------------------------------------------------
     async function startguesstime(roomId,chosensocketid,roomId,clients){
         console.log("startguess time called");
         timerMap[roomId]=setInterval(()=>{
-            console.log("Guesscountdown: "+countdownMap[roomId]);
+            // console.log("Guesscountdown: "+countdownMap[roomId]);
             if(countdownMap[roomId]<=0){
                 countdownMap[roomId]=10;
                 clearInterval(timerMap[roomId]);
@@ -310,7 +317,7 @@ io.on('connection', (socket) => {
             else currentroundscoresMap[mysocketid]=0;
         }
         const clients = getAllConnectedClients(roomId);
-        console.log(Chatval+" "+wordMap[roomId]);
+        // console.log(Chatval+" "+wordMap[roomId]);
         // console.log("isguess: "+isguesscorrect);
         clients.forEach(({ socketId }) => {
             io.to(socketId).emit("sentchat", {
@@ -330,6 +337,7 @@ io.on('connection', (socket) => {
     //next round socket request-------------------------------------------------------------------------
 
     socket.on("endround",({roomId,mysocketid,countdown})=>{
+        deleteLiveGames(roomId);
         clearInterval(timerMap[roomId]);
         var timer;
         timerMap[roomId]=timer;
@@ -348,7 +356,7 @@ io.on('connection', (socket) => {
         if(numberofroundsMap[roomId]>=1){
             clearInterval(timerMap[roomId]);
             
-            console.log("end dound emit function called (round ended)");
+            console.log("end round emit function called (round ended)");
             var rank=1;
             clients.forEach(({ socketId }) => {
                 updatepoints(socketId,rank,userSocketMap[socketId][1]);
@@ -381,6 +389,8 @@ io.on('connection', (socket) => {
     });
     // socket.off("endround");
 
+    //function to start showing result time after the end of round-----------------------------------------------------
+
     function startresulttime(roomId,drawersocket,clients){
         // clients.forEach(({ socketId }) => {
         //     io.to(socketId).emit("stopres", {
@@ -396,16 +406,16 @@ io.on('connection', (socket) => {
             console.log("result time running+ "+timerMap[roomId]);
             console.log(ctMap[roomId]);
             if(ctMap[roomId]>0){
-                console.log("dont show");
+                // console.log("dont show");
                 clearTimeout(timerMap[roomId]);
                 cleartimer(roomId);
                 var timer;
                 timerMap[roomId]=timer;
                 return;
             }
-            console.log("stopping result time");
+            // console.log("stopping result time");
             ctMap[roomId]=1;
-            console.log("about to release");
+            // console.log("about to release");
             clients.forEach(({ socketId }) => {
                 io.to(socketId).emit("stopres", {
                     roomId,
@@ -423,7 +433,7 @@ io.on('connection', (socket) => {
     }
 
 
-    //moving the mouse pointer-------------------------------------------
+    //moving the mouse pointer----------------------------------------------------------------------------------------
     socket.on("showpointertoothers",({roomId,clientX,clientY,name})=>{
         socket.broadcast.to(roomId).emit("movingpointer", {
             roomId,

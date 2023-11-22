@@ -8,7 +8,7 @@ var date = new Date();
 async function updatepoints(socketId,rank,points){
     // console.log("upate: "+socketId+" "+rank);
     var res=await usermodel.findOne({socketId:socketId});
-    console.log(res);
+    // console.log(res);
     var useremail=res.email;
     var add=0;
     if(rank==1){
@@ -89,7 +89,7 @@ async function updatepoints(socketId,rank,points){
                 level:level,
                 pastmatches:pastmatches
             });
-            console.log("data",data);
+            // console.log("data",data);
         }
         catch(e){
             console.log("error at storing points after first time"+ e);

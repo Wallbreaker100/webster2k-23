@@ -2,12 +2,14 @@ import React,{useState} from 'react';
 import './../../css/carousel.css'
 import {FaAngleRight,FaAngleLeft} from "react-icons/fa6";
 import { useAuth0 } from "@auth0/auth0-react";
+import { useNavigate } from 'react-router-dom';
 
 //main page to be shown after authentication
 const Mainpage = () => {
   const [ct,setct]=useState(0);
   const { user} = useAuth0();
-  console.log(user);
+  const navigate = useNavigate();
+  // console.log(user);
 
   const storeuserindb=fetch("http://localhost:5000/storeuser",{
     method: 'POST',
@@ -37,6 +39,17 @@ const Mainpage = () => {
     
   // });
 
+  async function play_with_randoms(){
+
+  }
+
+  async function play_with_friends(){
+    navigate("/joinroom");
+  }
+
+  async function create_game(){
+    navigate("/createRoom");
+  }
     
 
   //slider data for changing states
@@ -46,21 +59,24 @@ const Mainpage = () => {
       headingspan:"Randoms!",
       "paragraphData":"Doodle, guess, and compete with strangers globally in Picasso's 'Play with Randoms' feature for endless artistic fun!",
       "imageurl":require("./../../images/play_with_randoms_3.png"),
-      buttonData:"Play Now"
+      buttonData:"Play Now",
+      func:play_with_randoms
     },
     {
       headingData:"Play With ",
       headingspan:"Friends!",
       paragraphData:"Sketch and guess alongside your friends in real-time challenges using Picasso's Play with Friends feature, making every match an art-filled adventure!",
       "imageurl":require("./../../images/play_with_friends_1.png"),
-      buttonData:"Play Now"
+      buttonData:"Play Now",
+      func:play_with_friends
     },
     {
       headingData:"Create Your Own ",
       headingspan:"Lobby!",
       paragraphData:"Take the lead and create your artistic showdowns by hosting personalized games with friends through Picasso's 'Host Your Own Game' feature, setting the canvas for creative fun!",
       "imageurl":require("./../../images/create_your_game_1.png"),
-      buttonData:"Create Now"
+      buttonData:"Create Now",
+      func:create_game
     },
   ];
 
@@ -98,7 +114,7 @@ const Mainpage = () => {
             <div className='mainpage_innerdiv11'>
               <h1>{arr[ct].headingData}<span>{arr[ct].headingspan}</span></h1>
               <p>{arr[ct].paragraphData}</p>
-              <button className='loginbtn'>{arr[ct].buttonData}</button>
+              <button onClick={arr[ct].func} className='loginbtn'>{arr[ct].buttonData}</button>
             </div>
           </div>
         </div>

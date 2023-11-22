@@ -186,7 +186,7 @@ const Profile = () => {
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    fill="hsl(179, 93%, 44%)"
+                    fill="#7852A9"
                     label="Matches Played Stats"
                   />
                   <Tooltip />
