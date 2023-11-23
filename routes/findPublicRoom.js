@@ -10,13 +10,13 @@ router.use(bodyParser.urlencoded({
 }));
 router.use(express.json());
 
-router.post("/checkBeforeJoiningRoom",async (req,res)=>{
+router.post("/findPublicRoom",async (req,res)=>{
     try{
-        const roomId=req.body.roomId;
-        const findRoom=await currentlivegames.findOne({roomId:roomId});
-        if(findRoom==null) return res.status(200).json({value:false,status:"not_full"});
-        if(findRoom.members>=3) return res.status(200).json({value:false,status:"full"});
-        return res.status(200).json({value:true});
+        const roomSatisfyingCondition=await currentlivegames.findOne({Private:0,members:{$lt:4}});
+        if(roomSatisfyingCondition==null){
+            return res.status(200).json({value:false});
+        }
+        else return res.status(200).json({value:true,room:roomSatisfyingCondition.roomId});
     }
     catch(e){
         console.log("error at checking of roomid ",e);

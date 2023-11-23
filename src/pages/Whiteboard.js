@@ -395,6 +395,7 @@ const Whiteboard = () => {
     });
   }, [socketRef.current, standings, showstandings]);
   function playendgamesound() {
+    console.log("playing result sound");
     new Audio(endgamesound).play();
   }
 

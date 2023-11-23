@@ -40,7 +40,23 @@ const Mainpage = () => {
   // });
 
   async function play_with_randoms(){
+    const findroom = await fetch("http://localhost:5000/findPublicRoom", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({}),
+    });
 
+    const data=await findroom.json();
+    if(data.value==false){
+      alert("Sorry No Active Rooms Found");
+      return;
+    }
+    // console.log("random: ",data);
+    var url="/joinroom/"+data.room;
+    navigate(url);
   }
 
   async function play_with_friends(){

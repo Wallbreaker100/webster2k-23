@@ -33,6 +33,7 @@ function App() {
           <Route path="/" element={<Home />}></Route>
           <Route path="/createRoom" element={<Room />}></Route>
           <Route path="/joinroom" element={<Joinroom />}></Route>
+          <Route path="/joinroom/:paramsid" element={<Joinroom />}></Route>
           <Route path="/room/:roomId" element={<Whiteboard />}></Route>
           <Route path="/profile" element={<Profile />}></Route>
         </Routes>

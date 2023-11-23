@@ -48,6 +48,7 @@ var timerMap={};
 var countdownMap={};
 var ctMap={};
 var flagcountMap={};
+var deletedMap={};
 //using routes for handling post and get requests-----------------------------------------------------
 
 const storeuser=require("./routes/storeuser");
@@ -59,12 +60,14 @@ const deleteLiveGames=require("./middlewares/deleteLiveGames.js");
 const updatepoints=require("./middlewares/updatepoints");
 const checkBeforeCreatingRoom=require("./routes/checkBeforeCreatingRoom");
 const checkBeforeJoiningRoom=require("./routes/checkBeforeJoiningRoom");
+const findPublicRoom=require("./routes/findPublicRoom.js");
 //using the routes created-----------------------------------------------------------------
 app.use(storeuser);
 app.use(offline);
 app.use(findfriends);
 app.use(checkBeforeCreatingRoom);
 app.use(checkBeforeJoiningRoom);
+app.use(findPublicRoom);
 //function to get all connected clients in a particular room-----------------------------------------------
 function getAllConnectedClients(roomId) {
     // Map
@@ -160,6 +163,11 @@ io.on('connection', (socket) => {
     //game logic begins----------------------------------------------------------------------------------------
 
     socket.on("choosedrawer",({roomId})=>{
+        if(deletedMap[roomId]==null){
+            deleteLiveGames(roomId);
+            deletedMap[roomId]=1;
+        }
+        
         console.log("choosing");
         clearInterval(timerMap[roomId]);
         var timer;
@@ -239,7 +247,7 @@ io.on('connection', (socket) => {
         });
 
         //this is the time given to guesser--------------------------------------------------------
-        countdownMap[roomId]=60;
+        countdownMap[roomId]=30;
         startguesstime(roomId,wordMap[roomId][1],roomId,clients);
     })
 
@@ -303,7 +311,10 @@ io.on('connection', (socket) => {
         var isguesscorrect=0;
         if(gameStarted[roomId]){
             if(Chatval.toLowerCase()==wordMap[roomId][0] && mysocketid==drawerselectedforroom[roomId]) return;
-            if(Chatval.toLowerCase()==wordMap[roomId][0] && currentroundscoresMap[mysocketid]!=null) return;
+            if(Chatval.toLowerCase()==wordMap[roomId][0] && currentroundscoresMap[mysocketid]!=null && currentroundscoresMap[mysocketid]==0){
+                console.log("getting excess points so stopping ",currentroundscoresMap[mysocketid]);
+                return;
+            }
             if(Chatval.toLowerCase()==wordMap[roomId][0]){
                 isguesscorrect=1;
                 userSocketMap[drawerselectedforroom[roomId]][1]+=5;
@@ -314,7 +325,7 @@ io.on('connection', (socket) => {
                 if(currentroundscoresMap[mysocketid]==null) currentroundscoresMap[mysocketid]=gtime;
                 else currentroundscoresMap[mysocketid]=gtime;
             }
-            else currentroundscoresMap[mysocketid]=0;
+            
         }
         const clients = getAllConnectedClients(roomId);
         // console.log(Chatval+" "+wordMap[roomId]);
@@ -337,7 +348,7 @@ io.on('connection', (socket) => {
     //next round socket request-------------------------------------------------------------------------
 
     socket.on("endround",({roomId,mysocketid,countdown})=>{
-        deleteLiveGames(roomId);
+        
         clearInterval(timerMap[roomId]);
         var timer;
         timerMap[roomId]=timer;
@@ -353,11 +364,14 @@ io.on('connection', (socket) => {
         var drawersocket=wordMap[roomId][1];
         console.log("current round: "+numberofroundsMap[roomId]);
         // console.log("round: "+rounddata[mysocketid]);
-        if(numberofroundsMap[roomId]>=1){
+        if(numberofroundsMap[roomId]>=3){
             clearInterval(timerMap[roomId]);
             
             console.log("end round emit function called (round ended)");
             var rank=1;
+            clients.sort(function (a, b) {
+                return b.points - a.points;
+            });
             clients.forEach(({ socketId }) => {
                 updatepoints(socketId,rank,userSocketMap[socketId][1]);
                 io.to(socketId).emit("showfinalres", {
@@ -381,13 +395,13 @@ io.on('connection', (socket) => {
                     rounddata,
                     word,
                 });
+                delete currentroundscoresMap[socketId];
             });
-            delete currentroundscoresMap;
+            
         }
         
         
     });
-    // socket.off("endround");
 
     //function to start showing result time after the end of round-----------------------------------------------------
 

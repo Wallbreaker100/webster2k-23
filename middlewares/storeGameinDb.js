@@ -14,8 +14,8 @@ async function storeGameinDb(roomId,Private){
             storeRoomInDb.save();
         }
         else{
-            console.log("adding user to existing room");
-            const data=livegames.findOneAndUpdate({roomId:roomId},{
+            console.log("adding user to existing room ");
+            const data=await livegames.findOneAndUpdate({roomId:roomId},{
                 members:find.members+1
             });
         }
