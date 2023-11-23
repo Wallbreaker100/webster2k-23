@@ -21,6 +21,7 @@ import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
 import { CiMicrophoneOn, CiMicrophoneOff } from "react-icons/ci";
+import { IoMdClose } from "react-icons/io";
 
 //list of words--------------------------------------------------------------------------------------
 const words = [
@@ -110,6 +111,8 @@ const Whiteboard = () => {
   const [standings, setstandings] = useState([]);
   const [showstandings, setshowstandings] = useState(0);
   const [showspeech, setshowspeech] = useState(0);
+  const [muteId,setmuteId]=useState(null);
+  const [showpowerdiv,setshowpowerdiv]=useState(0);
   // console.log("am i the host "+isHost);
 
   //making speech recognition--------------------------------------------------------------------------
@@ -423,6 +426,38 @@ const Whiteboard = () => {
     return <Navigate to="/" />;
   }
 
+  //opening powers to users------------------------------------------------------------------------
+
+  async function openpowers(e){
+    const id=e.currentTarget.getAttribute("value");
+    // console.log(id);
+    setmuteId(id);
+    setshowpowerdiv(1);
+  }
+
+  async function closeshowpower(){
+    setshowpowerdiv(0);
+  }
+  async function mutePerson(){
+    socketRef.current.emit("mutethisperson",{roomId,mysocketid,muteId});
+    toast.success('Muted This person succesfully');
+  }
+
+  async function unmutePerson(){
+    socketRef.current.emit("unmutethisperson",{roomId,mysocketid,muteId});
+    toast.success('Unmuted This person succesfully');
+  }
+
+  async function sendFriendRequest(){
+    socketRef.current.emit("sendFriendRequest",{roomId,mysocketid,muteId});
+    toast.success('Friend request sent succesfully');
+  }
+
+  async function kickPerson(){
+    socketRef.current.emit("kickthisperson",{roomId,mysocketid,muteId});
+    toast.success('Notified team members about kicking request');
+  }
+
   //html code for drawing board
   return (
     <div className="mainWrap">
@@ -559,6 +594,22 @@ const Whiteboard = () => {
         <></>
       )}
 
+      {
+        showpowerdiv && (muteId!=mysocketid)?(
+          <>
+            <div className="power_outerdiv">
+              <IoMdClose size={50} onClick={closeshowpower} className="closebtn"/>
+              <div className="power_innerdiv">
+                <button className="powerbtn loginbtn mutebtn" onClick={mutePerson} value={muteId}>Mute</button>
+                <button className="powerbtn loginbtn unmutebtn" onClick={unmutePerson} value={muteId}>Unmute</button>
+                <button className="powerbtn loginbtn addfriendbtn" onClick={sendFriendRequest} value={muteId}>Add Friend</button>
+                <button className="powerbtn loginbtn kickbtn" onClick={kickPerson} value={muteId}>Kick</button>
+              </div>
+            </div>
+          </>
+        ):<></>
+      }
+
       <div className="aside">
         <div className="asideInner">
           <div className="logo">
@@ -569,9 +620,10 @@ const Whiteboard = () => {
           <div className="clientsList">
             {clients.map((client) => (
               <Client
-                key={client.socketId}
                 username={client.username}
                 points={client.points}
+                openpowers={openpowers}
+                clients={client}
               />
             ))}
           </div>

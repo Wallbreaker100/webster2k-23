@@ -58,9 +58,13 @@ const storesocketid=require("./middlewares/storesocketid.js");
 const storeGameinDb=require("./middlewares/storeGameinDb.js");
 const deleteLiveGames=require("./middlewares/deleteLiveGames.js");
 const updatepoints=require("./middlewares/updatepoints");
+const updateFriendListThroughSocket=require("./middlewares/updateFriendListThroughSocket");
+const gameNotStartedThusDeletingRoom=require("./middlewares/gameNotStartedThusDeletingRoom");
 const checkBeforeCreatingRoom=require("./routes/checkBeforeCreatingRoom");
 const checkBeforeJoiningRoom=require("./routes/checkBeforeJoiningRoom");
 const findPublicRoom=require("./routes/findPublicRoom.js");
+const acceptfriendrequest=require("./routes/acceptfriendrequest");
+const removeFriend=require("./routes/removeFriend");
 //using the routes created-----------------------------------------------------------------
 app.use(storeuser);
 app.use(offline);
@@ -68,6 +72,8 @@ app.use(findfriends);
 app.use(checkBeforeCreatingRoom);
 app.use(checkBeforeJoiningRoom);
 app.use(findPublicRoom);
+app.use(acceptfriendrequest);
+app.use(removeFriend);
 //function to get all connected clients in a particular room-----------------------------------------------
 function getAllConnectedClients(roomId) {
     // Map
@@ -457,14 +463,38 @@ io.on('connection', (socket) => {
         });
     })
 
+
+    //muting socket request---------------------------------------------------------------------------------
+    socket.on("mutethisperson",({roomId,mysocketid,muteId})=>{
+
+    })
+
+    //unmuting socket request-------------------------------------------------------------------------------
+    socket.on("mutethisperson",({roomId,mysocketid,muteId})=>{
+
+    })
+
+    //friendrequest socket request-----------------------------------------------------------------------------
+    socket.on("sendFriendRequest",({roomId,mysocketid,muteId})=>{
+        updateFriendListThroughSocket(mysocketid,muteId);
+    })
+
+    //kicking socket request----------------------------------------------------------------------------------
+    socket.on("kickthisperson",({roomId,mysocketid,muteId})=>{
+
+    })
+
+    //-----------------------------------------------------------------------------------------
     socket.on('disconnecting', () => {
         userDetail.updateOne({socketId:socket.id},{
             $set:{
                 isOnline:"no",
             }
         });
+        
         const rooms = [...socket.rooms];
         rooms.forEach((roomId) => {
+            gameNotStartedThusDeletingRoom(roomId);
             socket.in(roomId).emit(ACTIONS.DISCONNECTED, {
                 socketId: socket.id,
                 username: userSocketMap[socket.id],

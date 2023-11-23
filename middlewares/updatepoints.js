@@ -35,6 +35,7 @@ async function updatepoints(socketId,rank,points){
             var level=Math.floor(totalpoints/10);
             var pastmatches=[{
                     date:date.getDate(),
+                    month:date.getMonth(),
                     hour:date.getHours(),
                     min:date.getMinutes(),
                     add,
@@ -69,6 +70,7 @@ async function updatepoints(socketId,rank,points){
             var level=Math.floor(totalpoints/10);
             var matchdata={
                 date:date.getDate(),
+                month:date.getMonth(),
                 hour:date.getHours(),
                 min:date.getMinutes(),
                 add,

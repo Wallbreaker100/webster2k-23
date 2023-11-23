@@ -14,16 +14,17 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  PieChart, Pie
+  PieChart,
+  Pie,
 } from "recharts";
-
 
 const Profile = () => {
   const { user } = useAuth0();
   const [FriendsData, setFriendsData] = useState(null);
+  const [FriendRequestData, setFriendRequestData] = useState(null);
   const [matchesData, setMatchesData] = useState(null);
   const [GraphData, setGraphData] = useState([]);
-  const [PieData,setPieData]=useState([]);
+  const [PieData, setPieData] = useState([]);
   //including pie chart sepcific data---------------------------------------------------------------
 
   useEffect(() => {
@@ -41,12 +42,19 @@ const Profile = () => {
         const data = await res.json();
         const finalData = data.data[0];
         var arr = [];
-        var piearr=[
-          {name:"Total Matches",value:finalData.totalMatch},
-          {name:"First Position",value:finalData.first},
-          {name:"Second Position",value:finalData.second},
-          {name:"Third Position",value:finalData.third},
-          {name:"Losses",value:finalData.totalMatch-finalData.first-finalData.second-finalData.third}
+        var piearr = [
+          { name: "Total Matches", value: finalData.totalMatch },
+          { name: "First Position", value: finalData.first },
+          { name: "Second Position", value: finalData.second },
+          { name: "Third Position", value: finalData.third },
+          {
+            name: "Losses",
+            value:
+              finalData.totalMatch -
+              finalData.first -
+              finalData.second -
+              finalData.third,
+          },
         ];
         setPieData(piearr);
         if (finalData != null && finalData.pastmatches != null) {
@@ -59,7 +67,6 @@ const Profile = () => {
                 points_earned: element.points,
               },
             ];
-            
           });
           setGraphData(arr);
         }
@@ -86,12 +93,27 @@ const Profile = () => {
           body: JSON.stringify({ emailid: user.email }),
         });
         const data = await res.json();
-        setFriendsData(data.data[0]);
-        console.log(data.data[0]);
+        setFriendsData(data.data[0].friends);
+        setFriendRequestData(data.data[0].friendRequest);
+        console.log(data.data[0].friendRequest);
       }
       findallfriendsdata();
     }
   }, [user]);
+
+  async function update() {
+    const res = await fetch("http://localhost:5000/findfriends", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ emailid: user.email }),
+    });
+    const data = await res.json();
+    setFriendsData(data.data[0].friends);
+    setFriendRequestData(data.data[0].friendRequest);
+  }
 
   // console.log("data:"+friendsdata);
 
@@ -104,9 +126,15 @@ const Profile = () => {
             <div>
               <h3>Your Friends:</h3>
               <div id="f_scroll" className="friends_scroll">
-                {FriendsData?.friends.map((element) => {
-                  return <Friend name={element.name} email={element.email} />;
-                })}
+                {FriendsData != null &&
+                FriendsData.length != 0 &&
+                FriendsData != undefined ? (
+                  FriendsData?.map((element) => {
+                    return <Friend name={element[0]} email={element[1]} update={update}/>;
+                  })
+                ) : (
+                  <p>No Friends To Show😓😓</p>
+                )}
 
                 {/* <Friend name="sarthak patel" /> */}
               </div>
@@ -114,11 +142,18 @@ const Profile = () => {
             <div>
               <h3>Friend Requests:</h3>
               <div id="f_scroll" className="friends_scroll">
-                {FriendsData?.friends.map((element) => {
-                  return (
-                    <Friendrequest name={element.name} email={element.email} />
-                  );
-                })}
+                {FriendRequestData != null &&
+                FriendRequestData.length != 0 &&
+                FriendRequestData != undefined ? (
+                  FriendRequestData?.map((element) => {
+                    return (
+                      <Friendrequest name={element[0]} email={element[1]} update={update} />
+                    );
+                  })
+                ) : (
+                  <p>No New Friend Request Received!!</p>
+                )}
+
                 {/* <Friendrequest name="sarthak patel" />
                 <Friendrequest name="sarthak patel" /> */}
               </div>
