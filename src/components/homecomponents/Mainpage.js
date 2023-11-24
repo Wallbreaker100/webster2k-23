@@ -1,4 +1,4 @@
-import React,{useState} from 'react';
+import React,{useEffect, useState} from 'react';
 import './../../css/carousel.css'
 import {FaAngleRight,FaAngleLeft} from "react-icons/fa6";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -11,15 +11,22 @@ const Mainpage = () => {
   const navigate = useNavigate();
   // console.log(user);
 
-  const storeuserindb=fetch("http://localhost:5000/storeuser",{
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json'
-    },
-    credentials: 'include',
-    body: JSON.stringify(user),
-  });
-
+  
+  useEffect(()=>{
+    if(user==null) return;
+    async function start(){
+      const storeuserindb=await fetch("http://localhost:5000/storeuser",{
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(user),
+      });
+    }
+    start();
+    
+  },[user]);
 
   // window.addEventListener("beforeunload", function (e) {
   //   e.preventDefault(); // If you want a confirmation dialog

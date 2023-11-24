@@ -49,6 +49,8 @@ var countdownMap={};
 var ctMap={};
 var flagcountMap={};
 var deletedMap={};
+var muteMap={};
+var kickMap={};
 //using routes for handling post and get requests-----------------------------------------------------
 
 const storeuser=require("./routes/storeuser");
@@ -65,6 +67,7 @@ const checkBeforeJoiningRoom=require("./routes/checkBeforeJoiningRoom");
 const findPublicRoom=require("./routes/findPublicRoom.js");
 const acceptfriendrequest=require("./routes/acceptfriendrequest");
 const removeFriend=require("./routes/removeFriend");
+const updateFriendListThroughSearch=require("./routes/updateFriendListThroughSearch")
 //using the routes created-----------------------------------------------------------------
 app.use(storeuser);
 app.use(offline);
@@ -74,16 +77,33 @@ app.use(checkBeforeJoiningRoom);
 app.use(findPublicRoom);
 app.use(acceptfriendrequest);
 app.use(removeFriend);
+app.use(updateFriendListThroughSearch);
 //function to get all connected clients in a particular room-----------------------------------------------
 function getAllConnectedClients(roomId) {
     // Map
     return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map(
         (socketId) => {
-            return {
-                points:userSocketMap[socketId][1],
-                socketId,
-                username:userSocketMap[socketId][0],
-            };
+            if(kickMap[socketId]==null || kickMap[socketId]==0){
+                return {
+                    socketId:socketId,
+                    points:userSocketMap[socketId][1],
+                    username:userSocketMap[socketId][0],
+                };
+            }
+        }
+    );
+}
+
+function getKickClients(roomId) {
+    // Map
+    return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map(
+        (socketId) => {
+            if(kickMap[socketId]!=null || kickMap[socketId]!=0){
+                return {
+                    socketId:socketId,
+                    ct:kickMap[socketId]
+                };
+            }
         }
     );
 }
@@ -92,21 +112,22 @@ function getAllConnectedClients(roomId) {
 function getdataforcurrentround(roomId){
     return Array.from(io.sockets.adapter.rooms.get(roomId) || []).map(
         (socketId) => {
-            if(currentroundscoresMap[socketId]!=null){
-                return {
-                    roundpoints:currentroundscoresMap[socketId],
-                    socketId,
-                    username:userSocketMap[socketId][0]
-                };
+            if(kickMap[socketId]==null || kickMap[socketId]==0){
+                if(currentroundscoresMap[socketId]!=null){
+                    return {
+                        roundpoints:currentroundscoresMap[socketId],
+                        socketId,
+                        username:userSocketMap[socketId][0]
+                    };
+                }
+                else{
+                    return {
+                        roundpoints:0,
+                        socketId,
+                        username:userSocketMap[socketId][0]
+                    };
+                }
             }
-            else{
-                return {
-                    roundpoints:0,
-                    socketId,
-                    username:userSocketMap[socketId][0]
-                };
-            }
-            
         }
     );
 }
@@ -146,6 +167,7 @@ io.on('connection', (socket) => {
         socket.join(roomId);
         wordMap[roomId]=["",""];
         const clients = getAllConnectedClients(roomId);
+        console.log("cleints: ",clients);
         clients.forEach(({ socketId }) => {
             io.to(socketId).emit(ACTIONS.JOINED, {
                 clients,
@@ -209,7 +231,7 @@ io.on('connection', (socket) => {
         var timer;
         timerMap[roomId]=timer;
         timerMap[roomId]=setInterval(()=>{
-            // console.log("countdown: "+countdownMap[roomId]);
+            console.log("countdown: "+countdownMap[roomId]);
             if(countdownMap[roomId]<=0){
                 clearInterval(timerMap[roomId]);
                 var timer;
@@ -261,7 +283,7 @@ io.on('connection', (socket) => {
     async function startguesstime(roomId,chosensocketid,roomId,clients){
         console.log("startguess time called");
         timerMap[roomId]=setInterval(()=>{
-            // console.log("Guesscountdown: "+countdownMap[roomId]);
+            console.log("Guesscountdown: "+countdownMap[roomId]);
             if(countdownMap[roomId]<=0){
                 countdownMap[roomId]=10;
                 clearInterval(timerMap[roomId]);
@@ -337,14 +359,25 @@ io.on('connection', (socket) => {
         // console.log(Chatval+" "+wordMap[roomId]);
         // console.log("isguess: "+isguesscorrect);
         clients.forEach(({ socketId }) => {
-            io.to(socketId).emit("sentchat", {
-                name:name,
-                chat:Chatval,
-                isguesscorrect,
-                mysocketid,
-                socketId,
-                clients
-            });
+            if(muteMap[socketId]==null || !muteMap[socketId].includes(mysocketid)){
+                io.to(socketId).emit("sentchat", {
+                    name:name,
+                    chat:Chatval,
+                    isguesscorrect,
+                    kick:0,
+                    mysocketid,
+                    socketId,
+                    clients
+                });
+            }
+            // io.to(socketId).emit("sentchat", {
+            //     name:name,
+            //     chat:Chatval,
+            //     isguesscorrect,
+            //     mysocketid,
+            //     socketId,
+            //     clients
+            // });
         });
         
     });
@@ -359,6 +392,19 @@ io.on('connection', (socket) => {
         var timer;
         timerMap[roomId]=timer;
         console.log("ending the round "+roomId+" "+mysocketid+" "+countdown);
+        const kickdata=getKickClients(roomId);
+        if(kickdata!=null){
+            console.log(kickdata);
+            kickdata.forEach(({socketId,ct})=>{
+                if(ct>=1){
+                    io.to(socketId).emit("kickedFromRoom",{
+                        roomId,
+                    })
+                    // delete userSocketMap[socketId];
+                }
+            })
+        }
+        
 
         gameStarted[roomId]=0;
         const clients = getAllConnectedClients(roomId);
@@ -378,6 +424,7 @@ io.on('connection', (socket) => {
             clients.sort(function (a, b) {
                 return b.points - a.points;
             });
+            
             clients.forEach(({ socketId }) => {
                 updatepoints(socketId,rank,userSocketMap[socketId][1]);
                 io.to(socketId).emit("showfinalres", {
@@ -395,13 +442,17 @@ io.on('connection', (socket) => {
             if(numberofroundsMap[roomId]>=3) return;
             countdownMap[roomId]=20;
             startresulttime(roomId,drawersocket,clients);
-            clients.forEach(({ socketId }) => {
-                io.to(socketId).emit("movetonextround", {
-                    socketId,
-                    rounddata,
-                    word,
-                });
-                delete currentroundscoresMap[socketId];
+            console.log(clients);
+            clients.forEach((payload) => {
+                if(payload!=null){
+                    io.to(payload.socketId).emit("movetonextround", {
+                        socketId:payload.socketId,
+                        rounddata,
+                        word,
+                    });
+                    delete currentroundscoresMap[payload.socketId];
+                }
+                
             });
             
         }
@@ -436,13 +487,17 @@ io.on('connection', (socket) => {
             // console.log("stopping result time");
             ctMap[roomId]=1;
             // console.log("about to release");
-            clients.forEach(({ socketId }) => {
-                io.to(socketId).emit("stopres", {
-                    roomId,
-                    drawersocket,
-                    socketId
-                });
+            clients.forEach((payload) => {
+                if(payload!=null){
+                    io.to(payload.socketId).emit("stopres", {
+                        roomId,
+                        drawersocket,
+                        socketId:payload.socketId
+                    });
+                }
+                
             });
+            
         },3000);
         return () => clearInterval(timerMap[roomId])
     }
@@ -466,12 +521,19 @@ io.on('connection', (socket) => {
 
     //muting socket request---------------------------------------------------------------------------------
     socket.on("mutethisperson",({roomId,mysocketid,muteId})=>{
-
+        if(muteMap[mysocketid]==null) muteMap[mysocketid]=[muteId];
+        else muteMap[mysocketid]=[...muteMap[mysocketid],muteId];
     })
 
     //unmuting socket request-------------------------------------------------------------------------------
-    socket.on("mutethisperson",({roomId,mysocketid,muteId})=>{
-
+    socket.on("unmutethisperson",({roomId,mysocketid,muteId})=>{
+        if(muteMap[mysocketid]==null) return;
+        if(muteMap[mysocketid].includes(muteId)==false) return;
+        const index = muteMap[mysocketid].indexOf(muteId);
+        if (index > -1) { // only splice array when item is found
+            muteMap[mysocketid].splice(index, 1); // 2nd parameter means remove one item only
+        }
+        // muteMap[mysocketid].
     })
 
     //friendrequest socket request-----------------------------------------------------------------------------
@@ -481,7 +543,31 @@ io.on('connection', (socket) => {
 
     //kicking socket request----------------------------------------------------------------------------------
     socket.on("kickthisperson",({roomId,mysocketid,muteId})=>{
-
+        var temp=0;
+        if(kickMap[muteId]==null) temp=0;
+        else temp=kickMap[muteId];
+        const clients = getAllConnectedClients(roomId);
+        clients.forEach((payload) => {
+            if(payload!=null){
+                io.to(payload.socketId).emit("tellAboutKicking", {
+                    roomId,
+                    sender:userSocketMap[mysocketid],
+                    receiver:userSocketMap[muteId],
+                    ct:temp+1
+                });
+            }
+            
+        });
+        // clients.forEach(({ socketId }) => {
+        //     io.to(socketId).emit("tellAboutKicking", {
+        //         roomId,
+        //         sender:userSocketMap[mysocketid],
+        //         receiver:userSocketMap[muteId],
+        //         ct:temp+1
+        //     });
+        // });
+        if(kickMap[muteId]==null) kickMap[muteId]=1;
+        else kickMap[muteId]++;
     })
 
     //-----------------------------------------------------------------------------------------

@@ -5,6 +5,8 @@ import Friendrequest from "./../components/Friendrequest.js";
 import Navbar from "./../components/homecomponents/Navbar.js";
 import "./../css/profile.css";
 import { useParams } from "react-router-dom";
+import { IoIosPersonAdd } from "react-icons/io";
+import { useNavigate } from 'react-router-dom';
 import {
   LineChart,
   Line,
@@ -17,16 +19,22 @@ import {
   PieChart,
   Pie,
 } from "recharts";
+import toast from 'react-hot-toast';
+// import updateFriendListThroughSocket from "../../middlewares/updateFriendListThroughSocket.js";
 
 const Profile = () => {
-  const { user } = useAuth0();
+  const { user,isAuthenticated } = useAuth0();
   const [FriendsData, setFriendsData] = useState(null);
   const [FriendRequestData, setFriendRequestData] = useState(null);
   const [matchesData, setMatchesData] = useState(null);
   const [GraphData, setGraphData] = useState([]);
   const [PieData, setPieData] = useState([]);
+  const [Searchdata, setSearchdata] = useState("");
   //including pie chart sepcific data---------------------------------------------------------------
-
+  const reactNavigator = useNavigate();
+  if(isAuthenticated!=true){
+    reactNavigator('/');
+  }
   useEffect(() => {
     if (user != undefined || user != null) {
       // console.log(user);
@@ -115,6 +123,21 @@ const Profile = () => {
     setFriendRequestData(data.data[0].friendRequest);
   }
 
+  async function updateFriendListThroughSearch() {
+    if(Searchdata=="") return;
+    const res = await fetch("http://localhost:5000/updateFriendListThroughSearch", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ sender: user.email, receiver: Searchdata }),
+    });
+    const data=await res.json();
+    if(data.success==true) toast.success('Friend Request Sent Succesfully!!');
+    else toast.error("Not Able To Send Your Request!!")
+    setSearchdata("");
+  }
   // console.log("data:"+friendsdata);
 
   return (
@@ -123,6 +146,20 @@ const Profile = () => {
       <div className="profile_monitor">
         <div className="profile_outerdiv">
           <div className="friends_list_div">
+            <div className="search_users_div">
+              <input
+                value={Searchdata}
+                onChange={(e) => setSearchdata(e.target.value)}
+                className="search_friend_input"
+                placeholder="Search Users(Email)"
+              ></input>
+              <IoIosPersonAdd
+                onClick={updateFriendListThroughSearch}
+                className="friend_icon"
+                size={30}
+              />
+            </div>
+
             <div>
               <h3>Your Friends:</h3>
               <div id="f_scroll" className="friends_scroll">
@@ -130,7 +167,13 @@ const Profile = () => {
                 FriendsData.length != 0 &&
                 FriendsData != undefined ? (
                   FriendsData?.map((element) => {
-                    return <Friend name={element[0]} email={element[1]} update={update}/>;
+                    return (
+                      <Friend
+                        name={element[0]}
+                        email={element[1]}
+                        update={update}
+                      />
+                    );
                   })
                 ) : (
                   <p>No Friends To Show😓😓</p>
@@ -147,7 +190,11 @@ const Profile = () => {
                 FriendRequestData != undefined ? (
                   FriendRequestData?.map((element) => {
                     return (
-                      <Friendrequest name={element[0]} email={element[1]} update={update} />
+                      <Friendrequest
+                        name={element[0]}
+                        email={element[1]}
+                        update={update}
+                      />
                     );
                   })
                 ) : (

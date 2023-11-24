@@ -88,3 +88,20 @@
     width:max-content;
     margin-left: 60px;
 }
+
+.search_users_div{
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+.search_friend_input{
+    border:none;
+    width:200px;
+    height:40px;
+    padding:10px;
+}
+
+.friend_icon{
+    color:var(--primarycolor);
+    cursor:pointer;
+}

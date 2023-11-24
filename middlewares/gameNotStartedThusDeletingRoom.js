@@ -5,8 +5,8 @@ async function gameNotStartedThusDeletingRoom(roomId){
     console.log("deleting room without playing");
     try{
         const res=await livegames.findOne({roomId:roomId});
-        var mem=res.members;
         if(res==null) return;
+        var mem=res.members;
         if(res.members==1){
             var deleteroom=await livegames.deleteOne({roomId:roomId});
         }

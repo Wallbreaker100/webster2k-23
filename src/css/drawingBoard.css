@@ -135,8 +135,22 @@ label{
     border-bottom: 3px solid white;
 }
 
+.kickingdiv{
+    background-color: #CFFFBD;
+    padding:5px;
+    display: flex;
+    white-space: normal;
+    overflow-x:hidden;
+    border-bottom: 3px solid white;
+}
+
 .correctanswerdiv p{
     color:green;
+    font-weight:600;
+}
+
+.kickingdiv p{
+    color:blue;
     font-weight:600;
 }
 .wordchosendiv{

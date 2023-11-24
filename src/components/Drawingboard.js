@@ -9,23 +9,23 @@ const generator = rough.generator();
 //creating element with its type color and coordinates--------------------------------------------------
 
 
-const createElement = (id, x1, y1, x2, y2, type) => {
+const createElement = (id, x1, y1, x2, y2, type,options) => {
   switch (type) {
     case "line":
     case "rectangle":
       const roughElement =
         type === "line"
-          ? generator.line(x1, y1, x2, y2)
-          : generator.rectangle(x1, y1, x2 - x1, y2 - y1);
-      return { id, x1, y1, x2, y2, type, roughElement };
+          ? generator.line(x1, y1, x2, y2,{ stroke: options.color })
+          : generator.rectangle(x1, y1, x2 - x1, y2 - y1,{ stroke: options.color });
+      return { id, x1, y1, x2, y2, type, options,roughElement };
     case "circle":
       const circle = generator.circle(x1, y1, Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)); // Calculate radius based on distance between points
-      return { id, x1, y1, x2, y2, type, roughElement: circle };
+      return { id, x1, y1, x2, y2, type,options, roughElement: circle };
     case "ellipse":
       const ellipse= generator.ellipse(x1, y1, Math.sqrt((x2 - x1) ** 2) ,Math.sqrt((y2 - y1) ** 2)); // Calculate radius based on distance between points
-      return { id, x1, y1, x2, y2, type, roughElement: ellipse };
+      return { id, x1, y1, x2, y2, type,options, roughElement: ellipse };
     case "pencil":
-      return { id, type, points: [{ x: x1, y: y1 }] };
+      return { id, type, points: [{ x: x1, y: y1 }],options };
     case "eraser":
       return {id,type,points: [{ x: x1, y: y1 }] };
     case "text":
@@ -209,19 +209,24 @@ const drawElement = (roughCanvas, context, element,color,Thickness) => {
     case "rectangle":
     case "circle":
     case "ellipse":
+      context.strokeStyle = element.options.color;
+      // context.strokeStyle=color;
       roughCanvas.draw(element.roughElement);
       break;
     case "pencil":
-      context.fillStyle=color;
+      context.fillStyle=element.options.color;
+      // context.fillStyle=color;
       const stroke = getSvgPathFromStroke(getStroke(element.points,{
-        size:Thickness,
+        size:element.options.Thickness,
+        // size:Thickness
       }));
       context.fill(new Path2D(stroke));
       break;
     case "eraser":
       context.fillStyle = "#ffffff";
       const stroke1 = getSvgPathFromStroke(getStroke(element.points,{
-        size:50,
+        size:element.options.Thickness,
+        // size:50
       }));
       context.fill(new Path2D(stroke1));
       break;
@@ -434,7 +439,7 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
       case "rectangle":
       case "circle":
       case "ellipse":
-        elementsCopy[id] = createElement(id, x1, y1, x2, y2, type);
+        elementsCopy[id] = createElement(id, x1, y1, x2, y2, type,options);
         break;
      
       case "pencil":
@@ -448,7 +453,7 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
           .measureText(options.text).width;
         const textHeight = 24;
         elementsCopy[id] = {
-          ...createElement(id, x1, y1, x1 + textWidth, y1 + textHeight, type),
+          ...createElement(id, x1, y1, x1 + textWidth, y1 + textHeight, type,options),
           text: options.text,
         };
         break;
@@ -512,7 +517,7 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
       }
     } else {
       const id = elements.length;
-      const element = createElement(id, clientX, clientY, clientX, clientY, tool);
+      const element = createElement(id, clientX, clientY, clientX, clientY, tool,{color,Thickness});
       setElements(prevState => [...prevState, element]);
       setSelectedElement(element);
 
@@ -549,8 +554,8 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
 
     if (action === "drawing") {
       const index = elements.length - 1;
-      const { x1, y1 } = elements[index];
-      updateElement(index, x1, y1, clientX, clientY, tool);
+      const { x1, y1,options } = elements[index];
+      updateElement(index, x1, y1, clientX, clientY, tool,options);
     } else if (action === "moving") {
       if (selectedElement.type === "pencil") {
         const newPoints = selectedElement.points.map((_, index) => ({
@@ -564,7 +569,7 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
         };
         setElements(elementsCopy, true);
       } else {
-        const { id, x1, x2, y1, y2, type, offsetX, offsetY } = selectedElement;
+        const { id, x1, x2, y1, y2, type, offsetX, offsetY,options:{color,Thickness} } = selectedElement;
         const width = x2 - x1;
         const height = y2 - y1;
         const newX1 = clientX - offsetX;
@@ -573,7 +578,7 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
         updateElement(id, newX1, newY1, newX1 + width, newY1 + height, type, options);
       }
     } else if (action === "resizing") {
-      const { id, type, position, ...coordinates } = selectedElement;
+      const { id, type, position,...coordinates } = selectedElement;
       const { x1, y1, x2, y2 } = resizedCoordinates(clientX, clientY, position, coordinates);
       updateElement(id, x1, y1, x2, y2, type);
     }
@@ -598,10 +603,10 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
       }
 
       const index = selectedElement.id;
-      const { id, type } = elements[index];
+      const { id, type ,options} = elements[index];
       if ((action === "drawing" || action === "resizing") && adjustmentRequired(type)) {
         const { x1, y1, x2, y2 } = adjustElementCoordinates(elements[index]);
-        updateElement(id, x1, y1, x2, y2, type);
+        updateElement(id, x1, y1, x2, y2, type,options);
       }
     }
 
@@ -705,11 +710,20 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
 
         <input type="radio" id="text" checked={tool === "text"} onChange={() => setTool("text")} />
         <label htmlFor="text">Text</label>
+        <input
+          type="range"
+          min="0"
+          max="20"
+          onChange={(e) => setThickness(e.target.value)}
+          value={Thickness}
+        />
       </div>
       <div className="toolbox_div undo_redo_div">
+        
         <button onClick={undo}>Undo</button>
         <button onClick={redo}>Redo</button>
         <button id="clear_canvas" onClick={clearCanavs} className="clear_canvas_btn">Clear Canvas</button>
+        <input onChange={(e) => setColor(e.target.value)} type="color" id="favcolor" name="favcolor" value={color}></input>
         {
           (wordchosen!="") ? <div className="wordchosendiv"><p className="wordchosen"><span>Word Selected: </span>{wordchosen}</p></div>:<></>
         }

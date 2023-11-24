@@ -160,11 +160,12 @@ const Whiteboard = () => {
       socketRef.current.on(
         ACTIONS.JOINED,
         ({ clients, username, socketId }) => {
+          console.log(socketId);
           if (username !== location.state?.username) {
             toast.success(`${username} joined the room.`);
             console.log(`${username} joined`);
           }
-          setClients(clients);
+          setClients((prev)=>{return clients});
           setmysocketid(socketId);
         }
       );
@@ -276,6 +277,7 @@ const Whiteboard = () => {
         setdrawer(drawername);
         setdrawersocketid(chosensocketid);
         setmysocketid(socketId);
+        setgamestarted(1);
         // console.log("drawer: "+drawername);
       }
     );
@@ -287,6 +289,7 @@ const Whiteboard = () => {
     drawer,
     drawersocketid,
     mysocketid,
+    gamestarted
   ]);
 
   //function called when the drawer chooses the word he has to draw--------------------------------------------------
@@ -344,6 +347,9 @@ const Whiteboard = () => {
         else setgtime(countdown);
       }
     );
+    socketRef.current.on("kickedFromRoom",({roomId})=>{
+      leaveRoom();
+    })
   }, [socketRef.current]);
 
   //playing sound function-----------------------------------------------------------------
@@ -412,6 +418,21 @@ const Whiteboard = () => {
     });
   }, [socketRef.current]);
 
+  //kicking socket request------------------------------------------------------------------------
+  useEffect(()=>{
+    if(socketRef.current==null) return;
+    socketRef.current.on("tellAboutKicking",({roomId,sender,receiver,ct})=>{
+      const payload={
+        name:sender[0],
+        receiver:receiver[0],
+        isguesscorrect:1,
+        kick:1,
+        ct:ct
+      }
+      setChathistory([...Chathistory, payload]);
+    })
+  },[socketRef.current,Chathistory])
+
   //moving mouse pointer--------------------------------------------------------------------
 
   //leaving room button ----------------------------------------------------------------------------
@@ -428,8 +449,11 @@ const Whiteboard = () => {
 
   //opening powers to users------------------------------------------------------------------------
 
-  async function openpowers(e){
+  function openpowers(e){
     const id=e.currentTarget.getAttribute("value");
+    // console.log("id: ",id," ",mysocketid);
+    if(id==mysocketid) return;
+    
     // console.log(id);
     setmuteId(id);
     setshowpowerdiv(1);
@@ -438,6 +462,7 @@ const Whiteboard = () => {
   async function closeshowpower(){
     setshowpowerdiv(0);
   }
+
   async function mutePerson(){
     socketRef.current.emit("mutethisperson",{roomId,mysocketid,muteId});
     toast.success('Muted This person succesfully');
@@ -595,7 +620,7 @@ const Whiteboard = () => {
       )}
 
       {
-        showpowerdiv && (muteId!=mysocketid)?(
+        showpowerdiv && gamestarted?(
           <>
             <div className="power_outerdiv">
               <IoMdClose size={50} onClick={closeshowpower} className="closebtn"/>
@@ -618,12 +643,14 @@ const Whiteboard = () => {
           </div>
           <h3>Connected</h3>
           <div className="clientsList">
-            {clients.map((client) => (
+            {clients?.map((client) => (
+              
               <Client
                 username={client.username}
                 points={client.points}
                 openpowers={openpowers}
-                clients={client}
+                clientId={client.socketId}
+                mysocketid={mysocketid}
               />
             ))}
           </div>
@@ -633,7 +660,7 @@ const Whiteboard = () => {
             Start Game
           </button>
         ) : (
-          <div></div>
+          <></>
         )}
         <button className="btn copyBtn" onClick={copyRoomId}>
           Copy ROOM ID
@@ -660,9 +687,17 @@ const Whiteboard = () => {
             return (
               <>
                 {payload.isguesscorrect ? (
-                  <div className="correctanswerdiv">
-                    <p>{payload.name} has guessed the word correctly 🎉🎉!!</p>
-                  </div>
+                  
+                  payload.kick?(
+                    <div className="kickingdiv">
+                      <p>{payload.name} has voted to kick for {payload.receiver} ({payload.ct}/3) 🫥🫥!!</p>
+                    </div>
+                  ):(
+                    <div className="correctanswerdiv">
+                      <p>{payload.name} has guessed the word correctly 🎉🎉!!</p>
+                    </div>
+                  )
+                  
                 ) : (
                   <div className="onechatdiv">
                     <p>
