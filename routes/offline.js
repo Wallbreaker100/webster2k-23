@@ -21,7 +21,7 @@ router.post("/offline",async (req,res)=>{
             const userdata=new usermodel({
                 name:data.nickname,
                 email:data.email,
-                isOnline:false,
+                isOnline:"no",
             })
             userdata.save();
        }
@@ -29,7 +29,7 @@ router.post("/offline",async (req,res)=>{
         try{
             await  usermodel.updateOne({email:email},{
                 $set:{
-                    isOnline:false,
+                    isOnline:"no",
                 }
             });
         }
@@ -38,6 +38,7 @@ router.post("/offline",async (req,res)=>{
         }
         
        }
+       return res.status(200).json({success:true});
     }
     catch(e){
         console.log("error at storing user info: "+e);

@@ -276,13 +276,7 @@ const Profile = () => {
               </div>
             </div>
 
-            <div className="past_matches_div">
-              <h1>hello</h1>
-              <h1>hello</h1>
-              <h1>hello</h1>
-              <h1>hello</h1>
-              <h1>hello</h1>
-            </div>
+            
           </div>
         </div>
       </div>

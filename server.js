@@ -67,7 +67,8 @@ const checkBeforeJoiningRoom=require("./routes/checkBeforeJoiningRoom");
 const findPublicRoom=require("./routes/findPublicRoom.js");
 const acceptfriendrequest=require("./routes/acceptfriendrequest");
 const removeFriend=require("./routes/removeFriend");
-const updateFriendListThroughSearch=require("./routes/updateFriendListThroughSearch")
+const updateFriendListThroughSearch=require("./routes/updateFriendListThroughSearch");
+const getonlinefriends=require("./routes/getonlinefriends");
 //using the routes created-----------------------------------------------------------------
 app.use(storeuser);
 app.use(offline);
@@ -78,6 +79,7 @@ app.use(findPublicRoom);
 app.use(acceptfriendrequest);
 app.use(removeFriend);
 app.use(updateFriendListThroughSearch);
+app.use(getonlinefriends);
 //function to get all connected clients in a particular room-----------------------------------------------
 function getAllConnectedClients(roomId) {
     // Map
@@ -180,12 +182,13 @@ io.on('connection', (socket) => {
     
 
     // mouse move socket request -----------------------------------------------------------------------------
-    socket.on("whiteboardData", ({canvasImage,roomId}) => {
+    socket.on("whiteboardData", ({canvasImage,roomId,mysocketid}) => {
         let imgUrl = canvasImage;
         // console.log("updated image->")
-        socket.broadcast.to(roomId).emit("whiteBoardDataResponse", {
+        socket.to(roomId).emit("whiteBoardDataResponse", {
           imgUrl,
         });
+        
     });
 
     //game logic begins----------------------------------------------------------------------------------------
@@ -424,7 +427,7 @@ io.on('connection', (socket) => {
             clients.sort(function (a, b) {
                 return b.points - a.points;
             });
-            
+
             clients.forEach(({ socketId }) => {
                 updatepoints(socketId,rank,userSocketMap[socketId][1]);
                 io.to(socketId).emit("showfinalres", {

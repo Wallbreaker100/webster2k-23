@@ -9,6 +9,7 @@ const Mainpage = () => {
   const [ct,setct]=useState(0);
   const { user} = useAuth0();
   const navigate = useNavigate();
+
   // console.log(user);
 
   
@@ -128,20 +129,20 @@ const Mainpage = () => {
   return (
     <>
       <div className='mainpage_div'>
-        
-      <div className='slider_div'>
-        <div onClick={gotoprev} className='left'><FaAngleLeft/></div>
-        <div onClick={gotonext} className='right'><FaAngleRight/></div>
-        <div  style={background_image_styles} className='mainpage_outerdiv'>
-          <div  className='mainpage_innerdiv1'>
-            <div className='mainpage_innerdiv11'>
-              <h1>{arr[ct].headingData}<span>{arr[ct].headingspan}</span></h1>
-              <p>{arr[ct].paragraphData}</p>
-              <button onClick={arr[ct].func} className='loginbtn'>{arr[ct].buttonData}</button>
+        <div className='slider_div'>
+          <div onClick={gotoprev} className='left'><FaAngleLeft/></div>
+          <div onClick={gotonext} className='right'><FaAngleRight/></div>
+          <div  style={background_image_styles} className='mainpage_outerdiv'>
+            <div  className='mainpage_innerdiv1'>
+              <div className='mainpage_innerdiv11'>
+                <h1>{arr[ct].headingData}<span>{arr[ct].headingspan}</span></h1>
+                <p>{arr[ct].paragraphData}</p>
+                <button onClick={arr[ct].func} className='loginbtn'>{arr[ct].buttonData}</button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+        
       </div>
     </>
   )

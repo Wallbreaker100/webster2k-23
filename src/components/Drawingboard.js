@@ -278,7 +278,7 @@ const usePressedKeys = () => {
 
 
 
-const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametime,gtime}) => {
+const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametime,gtime,mysocketid}) => {
 
   //initialising default variables-------------------------------------------------------------------------
   const [img,setImg]=useState(null);
@@ -307,7 +307,7 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
       setImg(imgUrl);
     });
    
-  }, [socketRef.current, canvasRef]);
+  }, [socketRef.current, canvasRef,img]);
 
   useEffect(()=>{
     if(socketRef.current==null) return;
@@ -343,6 +343,7 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
       socketRef.current.emit("whiteboardData",{
         canvasImage,
         roomId,
+        mysocketid
       });
     }
     
@@ -646,6 +647,17 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
     })
   },[socketRef.current,mousepos]);
 
+  //function for downloading image--------------------------------------------------------
+  async function downloadimg(){
+    const link=document.createElement("a");
+    const image=document.createElement("img");
+    console.log("img: ",img);
+    image.src=img;
+    console.log(image);
+    link.download=`${Date.now()}.jpg`
+    link.href=image;
+    link.click();
+  }
 
   return (
     <>
@@ -722,6 +734,7 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
         
         <button onClick={undo}>Undo</button>
         <button onClick={redo}>Redo</button>
+        <button onClick={downloadimg}>Download</button>
         <button id="clear_canvas" onClick={clearCanavs} className="clear_canvas_btn">Clear Canvas</button>
         <input onChange={(e) => setColor(e.target.value)} type="color" id="favcolor" name="favcolor" value={color}></input>
         {
@@ -764,6 +777,10 @@ const DrawingBoard = ({socketRef,roomId,name,isDrawer,switchofblack,startgametim
           }
           {
             (wordchosen!="") ? <div className="gtimediv1"><h2 className="gtime1">{gtime}</h2></div>:<></>
+          }
+
+          {
+            wordchosen!=""?<button className="downloadimgbtn" onClick={downloadimg}>Download</button>:<></>
           }
           
         </div>

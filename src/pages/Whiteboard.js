@@ -4,6 +4,7 @@ import ACTIONS from "../Actions";
 import Client from "../components/Client";
 import { initSocket } from "../socket";
 import Drawingboard from "../components/Drawingboard";
+import OnlineFriend from "../components/OnlineFriend";
 import logo from "./../images/scribble.png";
 import { useAuth0 } from "@auth0/auth0-react";
 import correctsound from "./../images/correct_sound.wav";
@@ -113,6 +114,8 @@ const Whiteboard = () => {
   const [showspeech, setshowspeech] = useState(0);
   const [muteId,setmuteId]=useState(null);
   const [showpowerdiv,setshowpowerdiv]=useState(0);
+  const [onlinefriendsdata,setonlinefriendsdata]=useState([]);
+  const [showonlinefriend,setshowonlinefriends]=useState(0);
   // console.log("am i the host "+isHost);
 
   //making speech recognition--------------------------------------------------------------------------
@@ -463,6 +466,10 @@ const Whiteboard = () => {
     setshowpowerdiv(0);
   }
 
+  async function closeshowonlinefriends(){
+    setshowonlinefriends(0);
+  }
+
   async function mutePerson(){
     socketRef.current.emit("mutethisperson",{roomId,mysocketid,muteId});
     toast.success('Muted This person succesfully');
@@ -481,6 +488,22 @@ const Whiteboard = () => {
   async function kickPerson(){
     socketRef.current.emit("kickthisperson",{roomId,mysocketid,muteId});
     toast.success('Notified team members about kicking request');
+  }
+
+  async function showfriendfunc(){
+    console.log("showing friends");
+    const getonlinefriends=await fetch("http://localhost:5000/getonlinefriends",{
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify(user),
+    });
+    const data=await getonlinefriends.json();
+    console.log(data.arr);
+    setshowonlinefriends(1);
+    setonlinefriendsdata(data.arr);
   }
 
   //html code for drawing board
@@ -634,6 +657,26 @@ const Whiteboard = () => {
           </>
         ):<></>
       }
+      
+      {
+        showonlinefriend && !gamestarted?(
+          <div className="showonlinefriendsdiv">
+            <IoMdClose size={50} onClick={closeshowonlinefriends} className="onlinefriendsclosebtn"/>
+              {
+                <div className="showonlinefriendsinnerdiv">
+                  <h3>Friends Online:</h3>
+                  {onlinefriendsdata!=null && onlinefriendsdata.length!=0?(
+                    onlinefriendsdata?.map((element)=>{
+                      return (<OnlineFriend sender={user.email} name={element[0]} email={element[1]} roomId={roomId} />)
+                    })
+                  ):<p>No Friend Is Online</p>}
+                </div>
+              }
+            
+          </div>
+        ):<></>
+      }
+
 
       <div className="aside">
         <div className="asideInner">
@@ -662,6 +705,9 @@ const Whiteboard = () => {
         ) : (
           <></>
         )}
+        <button className="btn showfrndsbtn" onClick={showfriendfunc}>
+          Show Online Friends
+        </button>
         <button className="btn copyBtn" onClick={copyRoomId}>
           Copy ROOM ID
         </button>
@@ -677,6 +723,7 @@ const Whiteboard = () => {
           isDrawer={isDrawer}
           switchofblack={switchofblack}
           gtime={gtime}
+          mysocketid={mysocketid}
         />
       </div>
 
