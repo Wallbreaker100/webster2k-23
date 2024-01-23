@@ -1,16 +1,15 @@
 import React,{useEffect, useState} from 'react';
-import './../../css/carousel.css'
+import './../../css/carousel.css';
 import {FaAngleRight,FaAngleLeft} from "react-icons/fa6";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from 'react-router-dom';
 
-//main page to be shown after authentication
+//main page to be shown after authentication--------------------------------------------------------------
+
 const Mainpage = () => {
   const [ct,setct]=useState(0);
-  const { user} = useAuth0();
+  const {user} = useAuth0();
   const navigate = useNavigate();
-
-  // console.log(user);
 
   
   useEffect(()=>{
@@ -76,12 +75,12 @@ const Mainpage = () => {
   }
     
 
-  //slider data for changing states
+  //slider data for changing states------------------------------------------------------------------------
   const arr=[
     {
       headingData:"Play With ",
       headingspan:"Randoms!",
-      "paragraphData":"Doodle, guess, and compete with strangers globally in Picasso's 'Play with Randoms' feature for endless artistic fun!",
+      paragraphData:"Doodle, guess, and compete with strangers globally in Picasso's 'Play with Randoms' feature for endless artistic fun!",
       "imageurl":require("./../../images/play_with_randoms_3.png"),
       buttonData:"Play Now",
       func:play_with_randoms
@@ -105,7 +104,7 @@ const Mainpage = () => {
   ];
 
 
-  //slide for outer slider div
+  //slide for outer slider div---------------------------------------------------------------------
   const background_image_styles={
     width:"100vw",
     height:"100%",

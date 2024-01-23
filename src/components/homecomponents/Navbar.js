@@ -48,8 +48,8 @@ const Navbar = ({email}) => {
         </div>
         <div className='innerdiv2'> 
           <a href="/">Home</a>
-          <a>Play</a>
-          <a>Create</a>
+          <a href="/joinroom">Play</a>
+          <a href="/createRoom">Create</a>
           {
             isAuthenticated ?<a href="/profile">Profile</a>:<></>
           }
