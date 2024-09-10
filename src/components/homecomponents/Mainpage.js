@@ -15,7 +15,7 @@ const Mainpage = () => {
   useEffect(()=>{
     if(user==null) return;
     async function start(){
-      const storeuserindb=await fetch("http://localhost:5000/storeuser",{
+      const storeuserindb=await fetch(`${process.env.REACT_APP_HOSTEDURL}/storeuser`,{
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -32,7 +32,7 @@ const Mainpage = () => {
   //   e.preventDefault(); // If you want a confirmation dialog
   //   e.returnValue = ''; // If you want a confirmation dialog
 
-  //   fetch("http://localhost:5000/offline",{
+  //   fetch("process.env.REACT_APP_HOSTEDURL/offline",{
   //     method: 'POST',
   //     headers: {
   //         'Content-Type': 'application/json'
@@ -47,7 +47,7 @@ const Mainpage = () => {
   // });
 
   async function play_with_randoms(){
-    const findroom = await fetch("http://localhost:5000/findPublicRoom", {
+    const findroom = await fetch(`${process.env.REACT_APP_HOSTEDURL}/findPublicRoom`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

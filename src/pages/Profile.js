@@ -39,7 +39,7 @@ const Profile = () => {
     if (user != undefined || user != null) {
       // console.log(user);
       async function findallmatchdata() {
-        const res = await fetch("http://localhost:5000/findmatchdata", {
+        const res = await fetch(`${process.env.REACT_APP_HOSTEDURL}/findmatchdata`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -50,21 +50,39 @@ const Profile = () => {
         const data = await res.json();
         const finalData = data.data[0];
         var arr = [];
-        var piearr = [
-          { name: "Total Matches", value: finalData.totalMatch },
-          { name: "First Position", value: finalData.first },
-          { name: "Second Position", value: finalData.second },
-          { name: "Third Position", value: finalData.third },
-          {
-            name: "Losses",
-            value:
-              finalData.totalMatch -
-              finalData.first -
-              finalData.second -
-              finalData.third,
-          },
-        ];
-        setPieData(piearr);
+        if(!data){
+          var piearr = [
+            { name: "Total Matches", value: finalData.totalMatch },
+            { name: "First Position", value: finalData.first },
+            { name: "Second Position", value: finalData.second },
+            { name: "Third Position", value: finalData.third },
+            {
+              name: "Losses",
+              value:
+                finalData.totalMatch -
+                finalData.first -
+                finalData.second -
+                finalData.third,
+            },
+          ];
+          setPieData(piearr);
+        }
+        else{
+          var piearr = [
+            { name: "Total Matches", value: 0 },
+            { name: "First Position", value:0 },
+            { name: "Second Position", value:0 },
+            { name: "Third Position", value: 0 },
+            {
+              name: "Losses",
+              value:0
+                
+            },
+          ];
+          setPieData(piearr);
+        }
+        
+       
         if (finalData != null && finalData.pastmatches != null) {
           await finalData.pastmatches?.map((element, index) => {
             arr = [
@@ -92,7 +110,7 @@ const Profile = () => {
     if (user != undefined || user != null) {
       // console.log(user);
       async function findallfriendsdata() {
-        const res = await fetch("http://localhost:5000/findfriends", {
+        const res = await fetch(`${process.env.REACT_APP_HOSTEDURL}/findfriends`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -110,7 +128,7 @@ const Profile = () => {
   }, [user]);
 
   async function update() {
-    const res = await fetch("http://localhost:5000/findfriends", {
+    const res = await fetch(`${process.env.REACT_APP_HOSTEDURL}/findfriends`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -125,7 +143,7 @@ const Profile = () => {
 
   async function updateFriendListThroughSearch() {
     if(Searchdata=="") return;
-    const res = await fetch("http://localhost:5000/updateFriendListThroughSearch", {
+    const res = await fetch(`${process.env.REACT_APP_HOSTEDURL}/updateFriendListThroughSearch`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -30,7 +30,7 @@ const Room = () => {
             toast.error('ROOM ID & username is required');
             return;
         }
-        const check=await fetch("http://localhost:5000/checkBeforeCreatingRoom",{
+        const check=await fetch(`${process.env.REACT_APP_HOSTEDURL}/checkBeforeCreatingRoom`,{
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -45,7 +45,7 @@ const Room = () => {
             return;
         }
 
-        const ishost=await fetch("http://localhost:5000/findRooms",{
+        const ishost=await fetch(`${process.env.REACT_APP_HOSTEDURL}/findRooms`,{
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

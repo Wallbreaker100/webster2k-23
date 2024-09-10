@@ -11,7 +11,7 @@ const Friend = ({name,email,update}) => {
         }
     },[user]);
     async function removeFriend(){
-        const res = await fetch("http://localhost:5000/removeFriend", {
+        const res = await fetch(`${process.env.REACT_APP_HOSTEDURL}/removeFriend`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

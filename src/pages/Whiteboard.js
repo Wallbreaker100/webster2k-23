@@ -147,7 +147,7 @@ const Whiteboard = () => {
       //handling errors
       function handleErrors(e) {
         console.log("socket error", e);
-        toast.error("Socket connection failed, try again later.");
+        toast.error("Socket connection failed, try again later. "+e);
         reactNavigator("/");
       }
 
@@ -492,7 +492,7 @@ const Whiteboard = () => {
 
   async function showfriendfunc(){
     console.log("showing friends");
-    const getonlinefriends=await fetch("http://localhost:5000/getonlinefriends",{
+    const getonlinefriends=await fetch(`${process.env.REACT_APP_HOSTEDURL}/getonlinefriends`,{
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'

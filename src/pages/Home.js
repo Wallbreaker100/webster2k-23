@@ -13,7 +13,7 @@ const Home = () => {
       <div className='monitor_div'>
         <Navbar email={email}/> 
         {
-          isAuthenticated ?<Mainpage />:<Description/>
+          isAuthenticated ?<Mainpage/>:<Description/>
         }
       </div>
       

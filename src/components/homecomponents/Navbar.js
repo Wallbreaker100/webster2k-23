@@ -13,7 +13,7 @@ const Navbar = ({email}) => {
   const [notification,setNotification]=useState([]);
   async function getoffline(){
     console.log("offline");
-    const data=await fetch("http://localhost:5000/offline",{
+    const data=await fetch(`${process.env.REACT_APP_HOSTEDURL}/offline`,{
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -24,7 +24,7 @@ const Navbar = ({email}) => {
     logout({ logoutParams: { returnTo: window.location.origin } });
   }
   async function shownotificationdivfunc(){
-    const data=await fetch("http://localhost:5000/getallnotifications",{
+    const data=await fetch(`${process.env.REACT_APP_HOSTEDURL}/getallnotifications`,{
       method: "POST",
       headers: {
         "Content-Type": "application/json",

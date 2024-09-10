@@ -14,15 +14,22 @@ var Filter = require('bad-words'),
 filter = new Filter();
 
 //setting cors error-------------------------------------------------------------------------------------------------------
-const corsOptions = {
-    origin: 'http://localhost:3000',
+// const corsOptions = {
+//     origin: 'http://localhost:3000',
+//     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+//     credentials: true,
+//     optionsSuccessStatus: 204,
+// };
+
+const corsOptions1 = {
+    origin: `${REACT_APP_HOSTEDURL}`,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     optionsSuccessStatus: 204,
 };
 
 //hello
-app.use(cors(corsOptions));
+app.use(cors(corsOptions1));
 
 app.options('*', cors(corsOptions));
 
@@ -158,6 +165,8 @@ app.post("/findRooms",async (req,res)=>{
 //establishing socket connection for backend--------------------------------------------------------------
 
 io.on('connection', (socket) => {
+    
+    console.log("hello");
     console.log('socket connected', socket.id);
     
     socket.on(ACTIONS.JOIN, ({ roomId, username,email,Private }) => {
@@ -596,5 +605,5 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 server.listen(PORT, () => console.log(`Listening on port ${PORT}`));
