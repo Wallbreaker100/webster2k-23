@@ -14,22 +14,22 @@ var Filter = require('bad-words'),
 filter = new Filter();
 
 //setting cors error-------------------------------------------------------------------------------------------------------
-// const corsOptions = {
-//     origin: 'http://localhost:3000',
-//     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-//     credentials: true,
-//     optionsSuccessStatus: 204,
-// };
-
-const corsOptions1 = {
-    origin: `${REACT_APP_HOSTEDURL}`,
+const corsOptions = {
+    origin: 'http://localhost:3000',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     optionsSuccessStatus: 204,
 };
 
+// const corsOptions1 = {
+//     origin: `${REACT_APP_LOCALURL}`,
+//     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+//     credentials: true,
+//     optionsSuccessStatus: 204,
+// };
+
 //hello
-app.use(cors(corsOptions1));
+app.use(cors(corsOptions));
 
 app.options('*', cors(corsOptions));
 

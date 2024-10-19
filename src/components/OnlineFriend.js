@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 //client avatar component
 const OnlineFriend = ({sender,name,email,roomId}) => {
     async function sendnotification(){
-        const data=await fetch(`${process.env.REACT_APP_HOSTEDURL}/storenotificationindb`,{
+        const data=await fetch(`${process.env.REACT_APP_LOCALURL}/storenotificationindb`,{
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

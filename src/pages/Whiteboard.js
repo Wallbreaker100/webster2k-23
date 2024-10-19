@@ -492,7 +492,7 @@ const Whiteboard = () => {
 
   async function showfriendfunc(){
     console.log("showing friends");
-    const getonlinefriends=await fetch(`${process.env.REACT_APP_HOSTEDURL}/getonlinefriends`,{
+    const getonlinefriends=await fetch(`${process.env.REACT_APP_LOCALURL}/getonlinefriends`,{
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'

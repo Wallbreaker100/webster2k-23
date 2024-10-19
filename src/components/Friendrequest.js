@@ -15,7 +15,7 @@ const Friend = ({name,email,update}) => {
     },[user]);
 
     async function addToFriendList(){
-        const res = await fetch(`${process.env.REACT_APP_HOSTEDURL}/acceptfriendrequest`, {
+        const res = await fetch(`${process.env.REACT_APP_LOCALURL}/acceptfriendrequest`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

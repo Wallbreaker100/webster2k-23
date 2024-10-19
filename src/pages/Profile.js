@@ -39,7 +39,7 @@ const Profile = () => {
     if (user != undefined || user != null) {
       // console.log(user);
       async function findallmatchdata() {
-        const res = await fetch(`${process.env.REACT_APP_HOSTEDURL}/findmatchdata`, {
+        const res = await fetch(`${process.env.REACT_APP_LOCALURL}/findmatchdata`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -110,7 +110,7 @@ const Profile = () => {
     if (user != undefined || user != null) {
       // console.log(user);
       async function findallfriendsdata() {
-        const res = await fetch(`${process.env.REACT_APP_HOSTEDURL}/findfriends`, {
+        const res = await fetch(`${process.env.REACT_APP_LOCALURL}/findfriends`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -128,7 +128,7 @@ const Profile = () => {
   }, [user]);
 
   async function update() {
-    const res = await fetch(`${process.env.REACT_APP_HOSTEDURL}/findfriends`, {
+    const res = await fetch(`${process.env.REACT_APP_LOCALURL}/findfriends`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -143,7 +143,7 @@ const Profile = () => {
 
   async function updateFriendListThroughSearch() {
     if(Searchdata=="") return;
-    const res = await fetch(`${process.env.REACT_APP_HOSTEDURL}/updateFriendListThroughSearch`, {
+    const res = await fetch(`${process.env.REACT_APP_LOCALURL}/updateFriendListThroughSearch`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
